@@ -5,8 +5,8 @@ let tileScale = 32;
 let spriteSheet;
 
 // map globals (in cells)
-let mapWidth = 250;//500;//1000;
-let mapHeight = 250;//500;//1000;
+let mapWidth = 340;//500;//1000;
+let mapHeight = 480;//500;//1000;
 let chunksRow = 5;
 let chunksCol = 5;
 
@@ -14,36 +14,75 @@ let chunksCol = 5;
 let gameMap;
 let camera;
 let player;
+let keys = [];
+
+let keyboardConfig = {
+  'left': [37, 72, 65],
+  'right': [39, 76, 68],
+  'up': [38, 75, 87],
+  'down': [40, 74, 83],
+  'upleft': [89],
+  'upright': [85],
+  'downleft': [66],
+  'downright': [78]
+}
+let keyConfig = {};
+for (let item in keyboardConfig) {
+  for (let i in keyboardConfig[item]) {
+    keyConfig[keyboardConfig[item][i]] = item;
+  }
+}
+console.log(keyConfig);
 
 // handle keyboard
 function handleKeys(e) {
-  //console.log(e.keyCode);
+  keys = (keys || []);
+  keys[e.keyCode] = true;
+
+  //  console.log(e.keyCode);
 
   let dirX = 0;
   let dirY = 0;
   let updateViz = false;
 
-  switch (e.keyCode) {
-    case 37: // left
-      dirX = -1;
-      updateViz = true;
-      break;
-    case 38: // up
-      dirY = -1;
-      updateViz = true;
-      break;
-    case 39: // right
-      dirX = 1;
-      updateViz = true;
-      break;
-    case 40: // down
-      dirY = 1;
-      updateViz = true;
-      break;
-    default:
-      ;
-      break;
+  /// movement keys
+  if (keyConfig[e.keyCode] == "left") { // left
+    dirX = -1;
+    updateViz = true;
   }
+  if (keyConfig[e.keyCode] == "up") { // up 
+    dirY = -1;
+    updateViz = true;
+  }
+  if (keyConfig[e.keyCode] == "right") { // right 
+    dirX = 1;
+    updateViz = true;
+  }
+  if (keyConfig[e.keyCode] == "down") { // right 
+    dirY = 1;
+    updateViz = true;
+  }
+  if (keyConfig[e.keyCode] == "downleft") { // down left
+    dirX = -1;
+    dirY = 1;
+    updateViz = true;
+  }
+  if (keyConfig[e.keyCode] == "downright") { // down right
+    dirX = 1;
+    dirY = 1;
+    updateViz = true;
+  }
+  if (keyConfig[e.keyCode] == "upleft") { // up left
+    dirX = -1;
+    dirY = -1;
+    updateViz = true;
+  }
+  if (keyConfig[e.keyCode] == "upright") { // up right 
+    dirX = 1;
+    dirY = -1;
+    updateViz = true;
+  }
+  ///
 
   if (updateViz) {
     player.move(dirX, dirY);
@@ -52,14 +91,17 @@ function handleKeys(e) {
 }
 
 let Player = function () {
-  this.x = (gameMap.mapWidth/2) * tileSize + (tileSize/2);//canvas.width / 2;
-  this.y = (gameMap.mapHeight/2) * tileSize + (tileSize/2);//canvas.height / 2;
+  this.x = (gameMap.mapWidth / 2) * tileSize + (tileSize / 2);//canvas.width / 2;
+  this.y = (gameMap.mapHeight / 2) * tileSize + (tileSize / 2);//canvas.height / 2;
   this.screenX = this.x;
   this.screenY = this.y;
+  this.speed = 2;
+  this.chunkRow = 0;
+  this.chunkCol = 0;
 
   this.move = function (dirX, dirY) {
-    this.x += dirX * tileSize;//256;
-    this.y += dirY * tileSize;//256;
+    this.x += dirX * (this.speed * tileSize);//256;
+    this.y += dirY * (this.speed * tileSize);//256;
 
     // check collision
 
@@ -83,37 +125,38 @@ function draw() {
   var offsetX = -camera.x + startCol * tileSize;
   var offsetY = -camera.y + startRow * tileSize;
 
-  if (endRow >= gameMap.mapWidth)
-    endRow = gameMap.mapWidth - 1;
-  if (endCol >= gameMap.mapHeight)
-    endCol = gameMap.mapHeight - 1;
+  if (endCol >= gameMap.mapWidth)
+    endCol = gameMap.mapWidth - 1;
+  if (endRow >= gameMap.mapHeight)
+    endRow = gameMap.mapHeight - 1;
 
   //console.log(startCol, endCol, startRow, endRow, gameMap.mapWidth, gameMap.mapHeight);
 
-        //let offset = getSpriteOffset(tilePositions[_tile]['row'], tilePositions[_tile]['col']);
+  //let offset = getSpriteOffset(tilePositions[_tile]['row'], tilePositions[_tile]['col']);
 
   for (let r = startRow; r <= endRow; r++) {
     for (let c = startCol; c <= endCol; c++) {
-      let tile = gameMap.getTile("overworld", "0:0", r, c);
+      let chunkID = gameMap.getChunkID(player.chunkRow, player.chunkCol);
+      let tile = gameMap.getTile("overworld", chunkID, r, c);
       let _x = (c - startCol) * tileSize + offsetX;
       let _y = (r - startRow) * tileSize + offsetY;
 
       // if (tile != 1) {
-        let offset = getSpriteOffset(tilePositions[tile]['row'], tilePositions[tile]['col']);
-        //console.log(offset);
-        ctx.drawImage(
-          spriteSheet,
-          offset['dx'],
-          offset['dy'],
-          //35 * tileSize,
-          //14 * tileSize,
-          tileSize,
-          tileSize,
-          Math.round(_x),
-          Math.round(_y),
-          tileSize,
-          tileSize
-        );
+      let offset = getSpriteOffset(tilePositions[tile]['row'], tilePositions[tile]['col']);
+      //console.log(offset);
+      ctx.drawImage(
+        spriteSheet,
+        offset['dx'],
+        offset['dy'],
+        //35 * tileSize,
+        //14 * tileSize,
+        tileSize,
+        tileSize,
+        Math.round(_x),
+        Math.round(_y),
+        tileSize,
+        tileSize
+      );
       // }
     }
   }
@@ -124,8 +167,8 @@ function draw() {
     14 * tileSize,
     tileSize,
     tileSize,
-    player.screenX - tileSize/2,
-    player.screenY - tileSize/2,
+    player.screenX - tileSize / 2,
+    player.screenY - tileSize / 2,
     tileSize,
     tileSize
   );
@@ -160,6 +203,9 @@ window.onload = function () {
 
   // keys
   document.addEventListener('keydown', handleKeys);
+  document.addEventListener('keyup', function (e) {
+    keys[e.keyCode] = false;
+  });
 
   // create map object
   gameMap = new mapHandler(chunksRow, chunksCol, mapWidth, mapHeight);

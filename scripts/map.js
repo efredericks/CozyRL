@@ -29,12 +29,28 @@ class mapHandler {
         _map[levelName][_cid] = [];
 
         // generate map
+        console.log(this.mapHeight, this.mapWidth);
+
+        // WHAT IS TRANSPOSED!?!?!?!
+
+
+
+
         for (let row = 0; row < this.mapHeight; row++) {
           _map[levelName][_cid][row] = [];
           for (let col = 0; col < this.mapWidth; col++) {
-            if (col == 0 || col >= this.mapWidth - 1 || row == 0 || row >= this.mapHeight - 1)
-              _map[levelName][_cid][row].push(TILES.WALL);
-            else {
+            if (col == 0 || col >= this.mapWidth - 1 || row == 0 || row >= this.mapHeight - 1) {
+
+              // generate chunk transitions
+              if (col == 0 && row == Math.floor(this.mapHeight / 2) && this.numChunksCol > 0) {
+                _map[levelName][_cid][row].push(TILES.SHIFT_SCREEN_LEFT);
+                _map[levelName][_cid].leftChunkID = this.getChunkID(chunk_row, chunk_col - 1);
+              } else if (col == (this.mapWidth-1) && row == Math.floor(this.mapHeight / 2) && this.numChunksCol < (this.numChunksCol-1)) {
+                _map[levelName][_cid][row].push(TILES.SHIFT_SCREEN_RIGHT);
+                _map[levelName][_cid].leftChunkID = this.getChunkID(chunk_row, chunk_col + 1);
+              } else
+                _map[levelName][_cid][row].push(TILES.WALL);
+            } else {
               let _noise = this.noiseGen.get2DNoise(col + randomOffset, row + randomOffset);
 
               if (_noise < 0)
@@ -45,7 +61,7 @@ class mapHandler {
                 // if (Math.random() > 0.90)
                 //   _map[levelName][_cid][row].push(TILES.WATER_ANIM);
                 // else
-                  _map[levelName][_cid][row].push(TILES.WATER);
+                _map[levelName][_cid][row].push(TILES.WATER);
               } else if (_noise < 0.25)
                 _map[levelName][_cid][row].push(TILES.BEACH);
               else if (_noise < 0.4)
@@ -70,7 +86,7 @@ class mapHandler {
   };
 
   getTile = function (level, chunkID, x, y) {
-    return this.map[level][chunkID][y][x];
+    return this.map[level][chunkID][x][y];
   };
 };
 
