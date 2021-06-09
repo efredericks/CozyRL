@@ -24,6 +24,15 @@ function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
+// https://stackoverflow.com/questions/48802987/is-there-a-map-function-in-vanilla-javascript-like-p5-js
+// linearly maps value from the range (a..b) to (c..d)
+function mapRange(value, a, b, c, d) {
+  // first map value from (a..b) to (0..1)
+  value = (value - a) / (b - a);
+  // then map it from (0..1) to (c..d) and return it
+  return c + value * (d - c);
+}
+
 // town lookup table
 const TOWNS = {
   FRILL: 0,

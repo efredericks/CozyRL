@@ -1,8 +1,24 @@
+///TODO
+/*
+1. state machine
+2. FPS lock
+3. inventory
+4. town map
+5. cave map
+6. NPC interaction
+7. enemy interaction
+8. ...?
+*/
+
+
 // globals
 let ctx, canvas;
 let tileSize = 16;
 let tileScale = 32;
 let spriteSheet;
+let simTime = 0;
+let nightSky = 0;
+let timeStep = 0.1;
 
 // map globals (in cells)
 let mapWidth = 340;//500;//1000;
@@ -147,6 +163,11 @@ function validMove(character, dirX, dirY) {
     // character.chunkCol++;
     // if (character.chunkCol >= (gameMap.numChunksCol - 1)) character.chunkCol = gameMap.numChunksCol - 1;
     character.row = 0;
+
+  } else if (nextTile == TILES.WATER) { // slow down player
+    player.speed = 1;
+    player.speedCtr = 0;
+
   } else if (nextTile == TILES.TOWN) {
     let townID = gameMap.getTownID(chunkID, nextRow, nextCol);
     console.log("Welcome to " + gameMap.towns[townID]);
@@ -313,7 +334,19 @@ function draw() {
   ctx.fillText(txt, 10, 50);
 
 
+  // simulate day/night
+  simTime+=timeStep;
+  // day to night
+  if (simTime < 100)
+    nightSky = mapRange(simTime, 0,100,0,0.8);
+  // night to day
+  else if (simTime < 200)
+    nightSky = mapRange(simTime, 100,200,0.8,0);
+  else 
+    simTime = 0;
 
+  ctx.fillStyle = "rgba(0,0,0," + nightSky + ")";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   window.requestAnimationFrame(draw);
 }
@@ -338,6 +371,7 @@ window.onload = function () {
 
   // create map object
   gameMap = new mapHandler(chunksRow, chunksCol, mapWidth, mapHeight);
+  english_towns_cities = {};
 
   player = new Player();
   camera = new Camera(gameMap.mapWidth, gameMap.mapHeight, canvas.width, canvas.height);
@@ -347,5 +381,4 @@ window.onload = function () {
   spriteSheet = new Image();
   spriteSheet.src = "./assets/colored_transparent_packed.png";
   spriteSheet.onload = draw;
-
 }
