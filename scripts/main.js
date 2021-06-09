@@ -17,7 +17,6 @@ let tileSize = 16;
 let tileScale = 32;
 let spriteSheet;
 let simTime = 0;
-let nightSky = 0;
 let timeStep = 0.1;
 
 // map globals (in cells)
@@ -154,7 +153,7 @@ function validMove(character, dirX, dirY) {
     character.chunkRow = nextChunk.row;
     // character.chunkCol++;
     // if (character.chunkCol >= (gameMap.numChunksCol - 1)) character.chunkCol = gameMap.numChunksCol - 1;
-    character.row = gameMap.mapHeight-1;
+    character.row = gameMap.mapHeight - 1;
   } else if (nextTile == TILES.SHIFT_SCREEN_DOWN) {
     let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].downChunkID);
     console.log(nextChunk);
@@ -335,18 +334,28 @@ function draw() {
 
 
   // simulate day/night
-  simTime+=timeStep;
+  simTime += timeStep;
   // day to night
-  if (simTime < 100)
-    nightSky = mapRange(simTime, 0,100,0,0.8);
-  // night to day
-  else if (simTime < 200)
-    nightSky = mapRange(simTime, 100,200,0.8,0);
-  else 
+  let playerLight, nightSky;
+  if (simTime < 100) {
+    nightSky = mapRange(simTime, 0, 100, 0, 0.8);
+    playerLight = mapRange(simTime, 50, 100, 0, 0.2);
+    // night to day
+  } else if (simTime < 200) {
+    nightSky = mapRange(simTime, 100, 200, 0.8, 0);
+    playerLight = mapRange(simTime, 150, 200, 0.2, 0);
+  } else
     simTime = 0;
 
   ctx.fillStyle = "rgba(0,0,0," + nightSky + ")";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // draw a light around the player
+  ctx.fillStyle = "rgba(247,172,59," + playerLight + ")";
+  ctx.beginPath();
+  ctx.arc(player.screenX, player.screenY, 50, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.closePath();
 
   window.requestAnimationFrame(draw);
 }
