@@ -117,7 +117,6 @@ function validMove(character, dirX, dirY) {
   if (nextTile == TILES.WALL)
     return false;
   else if (nextTile == TILES.SHIFT_SCREEN_LEFT) {
-    let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
     let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].leftChunkID);
     character.chunkCol = nextChunk.col;
     character.chunkRow = nextChunk.row;
@@ -125,7 +124,6 @@ function validMove(character, dirX, dirY) {
     // if (character.chunkCol < 0) character.chunkCol = 0;
     character.col = gameMap.mapWidth - 1;
   } else if (nextTile == TILES.SHIFT_SCREEN_RIGHT) {
-    let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
     let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].rightChunkID);
     console.log(nextChunk);
     character.chunkCol = nextChunk.col;
@@ -134,7 +132,6 @@ function validMove(character, dirX, dirY) {
     // if (character.chunkCol >= (gameMap.numChunksCol - 1)) character.chunkCol = gameMap.numChunksCol - 1;
     character.col = 0;
   } else if (nextTile == TILES.SHIFT_SCREEN_UP) {
-    let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
     let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].upChunkID);
     console.log(nextChunk);
     character.chunkCol = nextChunk.col;
@@ -143,7 +140,6 @@ function validMove(character, dirX, dirY) {
     // if (character.chunkCol >= (gameMap.numChunksCol - 1)) character.chunkCol = gameMap.numChunksCol - 1;
     character.row = gameMap.mapHeight-1;
   } else if (nextTile == TILES.SHIFT_SCREEN_DOWN) {
-    let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
     let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].downChunkID);
     console.log(nextChunk);
     character.chunkCol = nextChunk.col;
@@ -151,6 +147,11 @@ function validMove(character, dirX, dirY) {
     // character.chunkCol++;
     // if (character.chunkCol >= (gameMap.numChunksCol - 1)) character.chunkCol = gameMap.numChunksCol - 1;
     character.row = 0;
+  } else if (nextTile == TILES.TOWN) {
+    let townID = gameMap.getTownID(chunkID, nextRow, nextCol);
+    console.log("Welcome to " + gameMap.towns[townID]);
+
+
   }
   return true;  // no collisions found
 }
@@ -210,6 +211,22 @@ let Player = function () {
     // this.y = Math.max(0, Math.min(this.y, maxY));
     // return true;
   }
+}
+
+// draw text
+function drawText(text, size, centered, textY, color, inTextX) {
+  ctx.fillStyle = color;
+  ctx.font = size + "px monospace";
+  let textX;
+  if (centered)
+    textX = (canvas.width - ctx.measureText(text).width) / 2;
+  else
+    textX = canvas.width - uiWidth * tileSize + 25;
+
+  if (inTextX)
+    textX = inTextX;
+
+  ctx.fillText(text, textX, textY);
 }
 
 // draw
@@ -286,6 +303,18 @@ function draw() {
   );
   console.log(gameMap.map);
   */
+
+  // DEBUG TEXT
+  ctx.fillStyle = "#ffffff";
+  ctx.font = 18 + "px monospace";
+  let txt = "Chunk ID [" + player.chunkRow + ":" + player.chunkCol + "]";
+  ctx.fillText(txt, 10, 30);
+  txt = "Row [" + player.row + "] Col [" + player.col + "]";
+  ctx.fillText(txt, 10, 50);
+
+
+
+
   window.requestAnimationFrame(draw);
 }
 

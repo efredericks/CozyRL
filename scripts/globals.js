@@ -24,6 +24,18 @@ function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
+// town lookup table
+const TOWNS = {
+  FRILL: 0,
+  LUB: 1,
+  MORTE: 2,
+  AUBER: 3,
+};
+// town chunk table
+let townChunks = {};
+// number of random towns to spawn
+const numRandomTowns = 10;
+
 
 const TILES = {
   WALL: 0,

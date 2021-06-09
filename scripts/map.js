@@ -6,25 +6,31 @@ class mapHandler {
     this.mapHeight = mapHeight; // all
 
     this.noiseGen = new FastSimplexNoise({ frequency: 0.01, octaves: 4 });
-    this.map = this.generateMap();
+    let retval = this.generateMap();
+    this.map = retval.map
+    this.towns = retval.towns; // city name by chunkID:row:col lookup
+  }
+
+  getTownID = function(chunkID, row, col) {
+    return chunkID + ":" + row + ":" + col;
   }
 
   getChunkID = function (chunkRow, chunkCol) {
     return chunkRow + ":" + chunkCol;
   };
 
-  getChunkSeparate = function(chunkID) {
+  getChunkSeparate = function (chunkID) {
     let c = chunkID.split(":");
-    return {'row': c[0], 'col': c[1]}
+    return { 'row': c[0], 'col': c[1] }
   }
 
   generateMap = function () {
     let _map = {};
+    let _towns = {};
 
     // generate overworld
     let levelName = "overworld";
     _map[levelName] = {};
-
 
     // generate chunks
     for (let chunk_row = 0; chunk_row < this.numChunksRow; chunk_row++) {
@@ -33,14 +39,7 @@ class mapHandler {
         let _cid = this.getChunkID(chunk_row, chunk_col);
         _map[levelName][_cid] = [];
 
-        // generate map
-        //console.log(this.mapHeight, this.mapWidth);
-
-        // WHAT IS TRANSPOSED!?!?!?!
-
-
-
-
+        // generate overworld map
         for (let row = 0; row < this.mapHeight; row++) {
           _map[levelName][_cid][row] = [];
           for (let col = 0; col < this.mapWidth; col++) {
@@ -48,24 +47,24 @@ class mapHandler {
 
               // generate chunk transitions
               // left transition
-              if (col == 0 && row == Math.floor(this.mapHeight / 2) && chunk_col > 0) { 
+              if (col == 0 && row == Math.floor(this.mapHeight / 2) && chunk_col > 0) {
                 _map[levelName][_cid][row].push(TILES.SHIFT_SCREEN_LEFT);
                 _map[levelName][_cid].leftChunkID = this.getChunkID(chunk_row, chunk_col - 1);
 
-              // right transition
-              } else if (col == (this.mapWidth-1) && row == Math.floor(this.mapHeight / 2) && chunk_col < (this.numChunksCol-1)) { 
+                // right transition
+              } else if (col == (this.mapWidth - 1) && row == Math.floor(this.mapHeight / 2) && chunk_col < (this.numChunksCol - 1)) {
                 _map[levelName][_cid][row].push(TILES.SHIFT_SCREEN_RIGHT);
                 _map[levelName][_cid].rightChunkID = this.getChunkID(chunk_row, chunk_col + 1);
 
-              // up transition
-              } else if (row == 0 && col == Math.floor(this.mapWidth/2) && chunk_row > 0) {
+                // up transition
+              } else if (row == 0 && col == Math.floor(this.mapWidth / 2) && chunk_row > 0) {
                 _map[levelName][_cid][row].push(TILES.SHIFT_SCREEN_UP);
-                _map[levelName][_cid].upChunkID = this.getChunkID(chunk_row-1, chunk_col);
+                _map[levelName][_cid].upChunkID = this.getChunkID(chunk_row - 1, chunk_col);
 
-              // down transition
-              } else if (row == (this.mapHeight-1) && col == Math.floor(this.mapWidth/2) && chunk_row < (this.numChunksRow-1)) {
+                // down transition
+              } else if (row == (this.mapHeight - 1) && col == Math.floor(this.mapWidth / 2) && chunk_row < (this.numChunksRow - 1)) {
                 _map[levelName][_cid][row].push(TILES.SHIFT_SCREEN_DOWN);
-                _map[levelName][_cid].downChunkID = this.getChunkID(chunk_row+1, chunk_col);
+                _map[levelName][_cid].downChunkID = this.getChunkID(chunk_row + 1, chunk_col);
 
               } else
                 _map[levelName][_cid][row].push(TILES.WALL);
@@ -95,18 +94,42 @@ class mapHandler {
       }
     }
 
+    // place towns
+    for (let i = 0; i < numRandomTowns; i++) {
+      let r_chunk_row = getRandomInteger(0, this.numChunksRow);
+      let r_chunk_col = getRandomInteger(0, this.numChunksCol);
+      let r_chunk_id = this.getChunkID(r_chunk_row, r_chunk_col);
+
+      let _x, _y;
+      do {
+        _x = getRandomInteger(2, this.mapWidth - 3);
+        _y = getRandomInteger(2, this.mapHeight - 3);
+
+      } while (_map["overworld"][r_chunk_id][_x][_y] != TILES.GROUND);
+      _map["overworld"][r_chunk_id][_x][_y] = TILES.TOWN;
+
+      let allCities = english_towns_cities.cities.concat(english_towns_cities.towns);
+      let cityName = allCities[getRandomInteger(0,allCities.length)];
+      _towns[this.getTownID(r_chunk_id, _x, _y)] = cityName;
+      console.log("Town [" + cityName + "] at " + r_chunk_id + " - " + _x + ":" + _y);
+    }
+
     //console.log(_map);
 
     // generate caves
     levelName = "caves";
     _map[levelName] = {};
 
-    return _map;
+    return {'map':_map, 'towns': _towns};
   };
 
   getTile = function (level, chunkID, x, y) {
     return this.map[level][chunkID][x][y];
   };
+
+  setTile = function (level, chunkID, x, y, newTile) {
+    this.map[level][chunkID][x][y] = newTile;
+  }
 };
 
 // Camera handler
