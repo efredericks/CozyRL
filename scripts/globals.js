@@ -4,6 +4,18 @@ function getSpriteOffset(row, col) {
   return { 'dx': dx, 'dy': dy };
 }
 
+function getRowCol(x, y) {
+  let dc = Math.floor((x - (tileSize / 2)) / tileSize);
+  let dr = Math.floor((y - (tileSize / 2)) / tileSize);
+  return { 'row': dr, 'col': dc };
+}
+
+function getSpritePosition(row, col) {
+  let dx = Math.floor(col * tileSize + tileSize / 2);
+  let dy = Math.floor(row * tileSize + tileSize / 2);
+  return { 'dx': dx, 'dy': dy };
+}
+
 function clamp(num, min, max) {
   return Math.min(Math.max(num, min), max);
 }
@@ -29,11 +41,13 @@ const TILES = {
   CAMPFIRE_ANIM: 19,
   CAMPFIRE_SURROUND: 20,
   BURN_ANIM2: 21,
-  SHIFT_SCREEN_LEFT: 22,
-  SHIFT_SCREEN_RIGHT: 23,
-  PAVEMENT: 24,
-  DOCK: 25,
-  DOCK2: 26,
+  PAVEMENT: 22,
+  DOCK: 23,
+  DOCK2: 24,
+  SHIFT_SCREEN_LEFT: 25,
+  SHIFT_SCREEN_RIGHT: 26,
+  SHIFT_SCREEN_UP: 27,
+  SHIFT_SCREEN_DOWN: 28,
 };
 const tilePositions = {
   0: { 'row': 17, 'col': 1 }, // wall
@@ -60,11 +74,13 @@ const tilePositions = {
   19: { 'row': 22, 'col': 3 }, // campfire anim
   20: { 'row': 22, 'col': 4 }, // campfire dirt
   21: { 'row': 22, 'col': 2 }, // burn animation 2
-  22: { 'row': 20, 'col': 26 }, // shift screen left tile
-  23: { 'row': 20, 'col': 24 }, // shift screen right tile
-  24: { 'row': 13, 'col': 0 }, // pavement
-  25: { 'row': 22, 'col': 5 }, // dock
-  26: { 'row': 22, 'col': 6 }, // dock2
+  22: { 'row': 13, 'col': 0 }, // pavement
+  23: { 'row': 22, 'col': 5 }, // dock
+  24: { 'row': 22, 'col': 6 }, // dock2
+  25: { 'row': 20, 'col': 26 }, // shift screen left tile
+  26: { 'row': 20, 'col': 24 }, // shift screen right tile
+  27: { 'row': 20, 'col': 23 }, // shift screen up tile
+  28: { 'row': 20, 'col': 25 }, // shift screen down tile
   //25: { 'row': 5, 'col': 16 }, // dock
 };
 const TREE_SPRITE_START = 4;

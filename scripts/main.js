@@ -32,7 +32,6 @@ for (let item in keyboardConfig) {
     keyConfig[keyboardConfig[item][i]] = item;
   }
 }
-console.log(keyConfig);
 
 // handle keyboard
 function handleKeys(e) {
@@ -84,32 +83,132 @@ function handleKeys(e) {
   }
   ///
 
-  if (updateViz) {
-    player.move(dirX, dirY);
-    camera.update();
+  if (updateViz) {//} && validMove(player, dirX, dirY)) {
+    player.move(dirX, dirY, camera);
+
+    if (player.speedCtr < 15) {
+      if (player.speedCtr < 10)
+        player.speed = 1;
+      else
+        player.speed = 2;
+
+      player.speedCtr++;
+    }
+    //if (update)
+    // camera.update();
   }
 }
 
+function validMove(character, dirX, dirY) {
+  let pos = getRowCol(character.x, character.y);
+  let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
+
+  let nextRow = pos['row'] + dirY;
+  let nextCol = pos['col'] + dirX;
+
+  // waaay out of bounds
+  if (nextRow < 0 || nextCol < 0 || nextRow > (gameMap.mapHeight - 1) || nextCol > (gameMap.mapWidth - 1))
+    return false;
+
+
+  let nextTile = gameMap.getTile("overworld", chunkID, nextRow, nextCol);
+
+  //console.log(character, pos, nextRow, nextCol, nextTile);
+  if (nextTile == TILES.WALL)
+    return false;
+  else if (nextTile == TILES.SHIFT_SCREEN_LEFT) {
+    let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
+    let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].leftChunkID);
+    character.chunkCol = nextChunk.col;
+    character.chunkRow = nextChunk.row;
+    console.log(nextChunk);
+    // if (character.chunkCol < 0) character.chunkCol = 0;
+    character.col = gameMap.mapWidth - 1;
+  } else if (nextTile == TILES.SHIFT_SCREEN_RIGHT) {
+    let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
+    let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].rightChunkID);
+    console.log(nextChunk);
+    character.chunkCol = nextChunk.col;
+    character.chunkRow = nextChunk.row;
+    // character.chunkCol++;
+    // if (character.chunkCol >= (gameMap.numChunksCol - 1)) character.chunkCol = gameMap.numChunksCol - 1;
+    character.col = 0;
+  } else if (nextTile == TILES.SHIFT_SCREEN_UP) {
+    let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
+    let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].upChunkID);
+    console.log(nextChunk);
+    character.chunkCol = nextChunk.col;
+    character.chunkRow = nextChunk.row;
+    // character.chunkCol++;
+    // if (character.chunkCol >= (gameMap.numChunksCol - 1)) character.chunkCol = gameMap.numChunksCol - 1;
+    character.row = gameMap.mapHeight-1;
+  } else if (nextTile == TILES.SHIFT_SCREEN_DOWN) {
+    let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
+    let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].downChunkID);
+    console.log(nextChunk);
+    character.chunkCol = nextChunk.col;
+    character.chunkRow = nextChunk.row;
+    // character.chunkCol++;
+    // if (character.chunkCol >= (gameMap.numChunksCol - 1)) character.chunkCol = gameMap.numChunksCol - 1;
+    character.row = 0;
+  }
+  return true;  // no collisions found
+}
+
 let Player = function () {
-  this.x = (gameMap.mapWidth / 2) * tileSize + (tileSize / 2);//canvas.width / 2;
-  this.y = (gameMap.mapHeight / 2) * tileSize + (tileSize / 2);//canvas.height / 2;
+  // this.x = (gameMap.mapWidth / 2) * tileSize + (tileSize / 2);//canvas.width / 2;
+  // this.y = (gameMap.mapHeight / 2) * tileSize + (tileSize / 2);//canvas.height / 2;
+  this.speed = 1;
+  this.speedCtr = 0;
+  this.chunkRow = 3;
+  this.chunkCol = 3;
+
+  this.row = Math.floor(gameMap.mapHeight / 2);
+  this.col = Math.floor(gameMap.mapWidth / 2);
+
+  let pos = getSpritePosition(this.row, this.col);
+  this.x = pos['dx'];
+  this.y = pos['dy'];
   this.screenX = this.x;
   this.screenY = this.y;
-  this.speed = 2;
-  this.chunkRow = 0;
-  this.chunkCol = 0;
 
-  this.move = function (dirX, dirY) {
-    this.x += dirX * (this.speed * tileSize);//256;
-    this.y += dirY * (this.speed * tileSize);//256;
 
-    // check collision
+  this.move = function (dirX, dirY, camera) {
+    for (let i = 1; i <= this.speed; i++) {
+      let valid = validMove(this, dirX, dirY);
 
-    let maxX = gameMap.mapWidth * tileSize;
-    let maxY = gameMap.mapHeight * tileSize;
+      if (!valid)
+        return;// false;
+      else {
+        this.row += dirY;
+        this.col += dirX;
 
-    this.x = Math.max(0, Math.min(this.x, maxX));
-    this.y = Math.max(0, Math.min(this.y, maxY));
+        // this.x += dirX * (i * tileSize);//256;
+        // this.y += dirY * (i * tileSize);//256;
+        let maxX = gameMap.mapWidth * tileSize;
+        let maxY = gameMap.mapHeight * tileSize;
+
+        let pos = getSpritePosition(this.row, this.col);
+        this.x = pos['dx'];
+        this.y = pos['dy'];
+
+        this.x = Math.max(0, Math.min(this.x, maxX));
+        this.y = Math.max(0, Math.min(this.y, maxY));
+
+        camera.update();
+      }
+    }
+    // this.x += dirX * (this.speed * tileSize);//256;
+    // this.y += dirY * (this.speed * tileSize);//256;
+
+    // // check collision
+
+    // let maxX = gameMap.mapWidth * tileSize;
+    // let maxY = gameMap.mapHeight * tileSize;
+
+    // this.x = Math.max(0, Math.min(this.x, maxX));
+    // this.y = Math.max(0, Math.min(this.y, maxY));
+    // return true;
   }
 }
 
@@ -204,6 +303,7 @@ window.onload = function () {
   // keys
   document.addEventListener('keydown', handleKeys);
   document.addEventListener('keyup', function (e) {
+    player.speedCtr = 0;
     keys[e.keyCode] = false;
   });
 
