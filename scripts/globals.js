@@ -45,6 +45,13 @@ let townChunks = {};
 // number of random towns to spawn
 const numRandomTowns = 10;
 
+const STATES = {
+  INTRO: 1,
+  GAME: 2,
+  DIALOGUE: 3,
+  MENU: 4,
+  GAME_OVER: 5
+};
 
 const TILES = {
   WALL: 0,

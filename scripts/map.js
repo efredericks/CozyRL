@@ -1,20 +1,27 @@
 class mapHandler {
-  constructor(numChunksRow, numChunksCol, mapWidth, mapHeight) {
+  constructor(numChunksRow, numChunksCol, mapWidth, mapHeight, numRandomNPCs) {
     this.numChunksRow = numChunksRow; // overworld-specific
     this.numChunksCol = numChunksCol; // overworld-specific
     this.mapWidth = mapWidth; // all
     this.mapHeight = mapHeight; // all
 
+    this.numRandomNPCs = numRandomNPCs;
+
     this.noiseGen = new FastSimplexNoise({ frequency: 0.01, octaves: 4 });
     let retval = this.generateMap();
     this.map = retval.map
     this.towns = retval.towns; // city name by chunkID:row:col lookup
+
+    this.npcs = this.generateNPCs();
+    this.enemies = this.generateEnemies();
   }
 
-  getTownID = function(chunkID, row, col) {
+  // colon separated town ID for lookup tables - chunkID:row:col
+  getTownID = function (chunkID, row, col) {
     return chunkID + ":" + row + ":" + col;
   }
 
+  // colon separated chunk ID - chunkRow:chunkCol
   getChunkID = function (chunkRow, chunkCol) {
     return chunkRow + ":" + chunkCol;
   };
@@ -22,6 +29,23 @@ class mapHandler {
   getChunkSeparate = function (chunkID) {
     let c = chunkID.split(":");
     return { 'row': c[0], 'col': c[1] }
+  }
+
+  generateNPCs = function () {
+    // for (let i = 0; i < this.numRandomNPCs; i++) {
+    // }
+  }
+
+  generateEnemies = function () {
+    let retval = [];
+
+    for (let i = 0; i < 20; i++) {
+      let c = getRandomInteger(2, this.mapWidth - 3);
+      let r = getRandomInteger(2, this.mapHeight - 3);
+      retval.push(new Character(3, 3, r, c, "Sporgle" + i, "enemy", "npc", 10, 10, 1, null));
+      console.log("Sporgle" + i + " at [" + r + ":" + c + "]");
+    }
+    return retval;
   }
 
   generateMap = function () {
@@ -109,18 +133,16 @@ class mapHandler {
       _map["overworld"][r_chunk_id][_x][_y] = TILES.TOWN;
 
       let allCities = english_towns_cities.cities.concat(english_towns_cities.towns);
-      let cityName = allCities[getRandomInteger(0,allCities.length)];
+      let cityName = allCities[getRandomInteger(0, allCities.length)];
       _towns[this.getTownID(r_chunk_id, _x, _y)] = cityName;
       console.log("Town [" + cityName + "] at " + r_chunk_id + " - " + _x + ":" + _y);
     }
-
-    //console.log(_map);
 
     // generate caves
     levelName = "caves";
     _map[levelName] = {};
 
-    return {'map':_map, 'towns': _towns};
+    return { 'map': _map, 'towns': _towns };
   };
 
   getTile = function (level, chunkID, x, y) {
@@ -171,3 +193,33 @@ let Camera = function (mapWidth, mapHeight, width, height) {
       this.following.screenY = this.following.y - this.y;
   };
 };
+
+class Character {
+  constructor(chunkRow, chunkCol, row, col, name, type, sprite, hp, ac, level, inventory) {
+    this.chunkRow = chunkRow;
+    this.chunkCol = chunkCol;
+    this.row = row;
+    this.col = col;
+    this.name = name;
+    this.type = type;
+    this.sprite = sprite;
+    this.hp = hp;
+    this.ac = ac;
+    this.level = level;
+    this.inventory = inventory;
+  };
+
+  draw = function () {
+    console.log(this.name + " says hey");
+  };
+
+  // handle chunk update in the main loop
+  update = function () {
+
+  };
+
+  getChunkID = function () {
+    return this.chunkRow + ":" + this.chunkCol;//tbd - move getChunkID to global call
+  }
+}
+

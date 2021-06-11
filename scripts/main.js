@@ -17,13 +17,16 @@ let tileSize = 16;
 let tileScale = 32;
 let spriteSheet;
 let simTime = 0;
-let timeStep = 0.1;
+let timeStep = .1;
+let gameState = STATES.INTRO;
 
 // map globals (in cells)
 let mapWidth = 340;//500;//1000;
 let mapHeight = 480;//500;//1000;
 let chunksRow = 5;
 let chunksCol = 5;
+
+let numRandomNPCs = chunksRow * chunksCol * 2;
 
 // global objects
 let gameMap;
@@ -249,6 +252,27 @@ function drawText(text, size, centered, textY, color, inTextX) {
   ctx.fillText(text, textX, textY);
 }
 
+// state machine
+function stateHandler() {
+  switch (gameState) {
+    case STATES.INTRO:
+      drawIntro();
+      break;
+    case STATES.GAME:
+    default:
+      draw();
+      break;
+  }
+
+  window.requestAnimationFrame(stateHandler);
+}
+
+// https://blog.hellojs.org/create-a-very-basic-loading-screen-using-only-javascript-css-3cf099c48b19
+function drawIntro() {
+  gameState = STATES.GAME;
+
+}
+
 // draw
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -270,9 +294,9 @@ function draw() {
 
   //let offset = getSpriteOffset(tilePositions[_tile]['row'], tilePositions[_tile]['col']);
 
+  let chunkID = gameMap.getChunkID(player.chunkRow, player.chunkCol);
   for (let r = startRow; r <= endRow; r++) {
     for (let c = startCol; c <= endCol; c++) {
-      let chunkID = gameMap.getChunkID(player.chunkRow, player.chunkCol);
       let tile = gameMap.getTile("overworld", chunkID, r, c);
       let _x = (c - startCol) * tileSize + offsetX;
       let _y = (r - startRow) * tileSize + offsetY;
@@ -297,17 +321,22 @@ function draw() {
     }
   }
 
-  ctx.drawImage(
-    spriteSheet,
-    35 * tileSize,
-    14 * tileSize,
-    tileSize,
-    tileSize,
-    player.screenX - tileSize / 2,
-    player.screenY - tileSize / 2,
-    tileSize,
-    tileSize
-  );
+  // simulate day/night
+  simTime += timeStep;
+  // day to night
+  let playerLight, nightSky;
+  if (simTime < 100) {
+    nightSky = mapRange(simTime, 0, 100, 0, 0.8);
+    playerLight = mapRange(simTime, 50, 100, 0, 0.2);
+    // night to day
+  } else if (simTime < 200) {
+    nightSky = mapRange(simTime, 100, 200, 0.8, 0);
+    playerLight = mapRange(simTime, 100, 150, 0.2, 0);
+  } else {
+    simTime = 0;
+    nightSky = 0;
+    playerLight = 0;
+  }
 
   /*
   ctx.drawImage(
@@ -324,28 +353,46 @@ function draw() {
   console.log(gameMap.map);
   */
 
-  // DEBUG TEXT
-  ctx.fillStyle = "#ffffff";
-  ctx.font = 18 + "px monospace";
-  let txt = "Chunk ID [" + player.chunkRow + ":" + player.chunkCol + "]";
-  ctx.fillText(txt, 10, 30);
-  txt = "Row [" + player.row + "] Col [" + player.col + "]";
-  ctx.fillText(txt, 10, 50);
 
+  // update enemies in chunk, draw enemies in view (above light)
+  enemiesInChunk = gameMap.enemies.filter(enemy => (enemy.getChunkID() == chunkID));
+  enemiesInChunk.forEach(enemy => enemy.update());
 
-  // simulate day/night
-  simTime += timeStep;
-  // day to night
-  let playerLight, nightSky;
-  if (simTime < 100) {
-    nightSky = mapRange(simTime, 0, 100, 0, 0.8);
-    playerLight = mapRange(simTime, 50, 100, 0, 0.2);
-    // night to day
-  } else if (simTime < 200) {
-    nightSky = mapRange(simTime, 100, 200, 0.8, 0);
-    playerLight = mapRange(simTime, 150, 200, 0.2, 0);
-  } else
-    simTime = 0;
+  enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
+  for (let i = 0; i < enemiesInView.length; i++) {
+      let _x = (enemiesInView[i].col - startCol) * tileSize + offsetX;
+      let _y = (enemiesInView[i].row - startRow) * tileSize + offsetY;
+
+      ctx.drawImage(
+        spriteSheet,
+        30*tileSize,//offset['dx'],
+        6*tileSize,//offset['dy'],
+        //35 * tileSize,
+        //14 * tileSize,
+        tileSize,
+        tileSize,
+        Math.round(_x),
+        Math.round(_y),
+        tileSize,
+        tileSize
+      );
+
+  }
+  //enemiesInView.forEach(enemy => enemy.draw());
+  //console.log(enemiesInChunk, enemiesInView);
+
+  // draw player
+  ctx.drawImage(
+    spriteSheet,
+    35 * tileSize,
+    14 * tileSize,
+    tileSize,
+    tileSize,
+    player.screenX - tileSize / 2,
+    player.screenY - tileSize / 2,
+    tileSize,
+    tileSize
+  );
 
   ctx.fillStyle = "rgba(0,0,0," + nightSky + ")";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -357,7 +404,13 @@ function draw() {
   ctx.fill();
   ctx.closePath();
 
-  window.requestAnimationFrame(draw);
+  // DEBUG TEXT
+  ctx.fillStyle = "#ffffff";
+  ctx.font = 18 + "px monospace";
+  let txt = "Chunk ID [" + player.chunkRow + ":" + player.chunkCol + "]";
+  ctx.fillText(txt, 10, 30);
+  txt = "Row [" + player.row + "] Col [" + player.col + "]";
+  ctx.fillText(txt, 10, 50);
 }
 
 // initialize
@@ -379,7 +432,7 @@ window.onload = function () {
   });
 
   // create map object
-  gameMap = new mapHandler(chunksRow, chunksCol, mapWidth, mapHeight);
+  gameMap = new mapHandler(chunksRow, chunksCol, mapWidth, mapHeight, numRandomNPCs);
   english_towns_cities = {};
 
   player = new Player();
@@ -389,5 +442,5 @@ window.onload = function () {
 
   spriteSheet = new Image();
   spriteSheet.src = "./assets/colored_transparent_packed.png";
-  spriteSheet.onload = draw;
+  spriteSheet.onload = stateHandler;//draw;
 }
