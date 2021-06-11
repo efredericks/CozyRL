@@ -215,7 +215,7 @@ class Character {
 
   // handle chunk update in the main loop
   update = function () {
-    if (Math.random() > 0.5) {//98) {
+    if (Math.random() > 0.98) {
       let directions = [
         [-1, -1], // nw
         [-1, 0], // n

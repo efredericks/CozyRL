@@ -50,7 +50,8 @@ const STATES = {
   GAME: 2,
   DIALOGUE: 3,
   MENU: 4,
-  GAME_OVER: 5
+  GAME_OVER: 5,
+  PAUSED: 6,
 };
 
 const TILES = {

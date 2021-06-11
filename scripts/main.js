@@ -19,6 +19,7 @@ let spriteSheet;
 let simTime = 0;
 let timeStep = .1;
 let gameState = STATES.INTRO;
+let pauseDrawn = false;
 
 // map globals (in cells)
 let mapWidth = 340;//500;//1000;
@@ -42,7 +43,8 @@ let keyboardConfig = {
   'upleft': [89],
   'upright': [85],
   'downleft': [66],
-  'downright': [78]
+  'downright': [78],
+  'paused': [80],
 }
 let keyConfig = {};
 for (let item in keyboardConfig) {
@@ -56,11 +58,21 @@ function handleKeys(e) {
   keys = (keys || []);
   keys[e.keyCode] = true;
 
-  //  console.log(e.keyCode);
+  // console.log(e.keyCode);
 
   let dirX = 0;
   let dirY = 0;
   let updateViz = false;
+
+  /// game keys
+  if (keyConfig[e.keyCode] == "paused") {
+    if (gameState == STATES.GAME) {
+      gameState = STATES.PAUSED;
+      pauseDrawn = false;
+    } else if (gameState == STATES.PAUSED)
+      gameState = STATES.GAME;
+
+  }
 
   /// movement keys
   if (keyConfig[e.keyCode] == "left") { // left
@@ -256,9 +268,14 @@ function stateHandler() {
     case STATES.INTRO:
       drawIntro();
       break;
+    case STATES.PAUSED:
+      console.log("paused");
+      drawPause();
+      break;
     case STATES.GAME:
     default:
       draw();
+
       break;
   }
 
@@ -268,7 +285,69 @@ function stateHandler() {
 // https://blog.hellojs.org/create-a-very-basic-loading-screen-using-only-javascript-css-3cf099c48b19
 function drawIntro() {
   gameState = STATES.GAME;
+}
 
+function drawPause() {
+  if (!pauseDrawn) {
+    ctx.save();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    var startCol = Math.floor(camera.x / tileSize);
+    var endCol = startCol + Math.floor(camera.width / tileSize);
+    var startRow = Math.floor(camera.y / tileSize);
+    var endRow = startRow + Math.floor(camera.height / tileSize);
+    var offsetX = -camera.x + startCol * tileSize;
+    var offsetY = -camera.y + startRow * tileSize;
+    if (endCol >= gameMap.mapWidth)
+      endCol = gameMap.mapWidth - 1;
+    if (endRow >= gameMap.mapHeight)
+      endRow = gameMap.mapHeight - 1;
+    let chunkID = gameMap.getChunkID(player.chunkRow, player.chunkCol);
+    drawEnvironment(startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY);
+
+    // overlay
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // text overlay
+    ctx.fillStyle = "rgba(13,53,6,0.5)";
+    ctx.fillRect(0,(canvas.height/2)-50, canvas.width, 100);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = 48 + "px monospace";
+    let txt = "game paused";
+    ctx.fillText(txt, canvas.width/2, canvas.height/2);
+
+    ctx.restore();
+  }
+  pauseDrawn = true;
+}
+
+// draw environment
+function drawEnvironment(startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY) {
+  for (let r = startRow; r <= endRow; r++) {
+    for (let c = startCol; c <= endCol; c++) {
+      let tile = gameMap.getTile("overworld", chunkID, r, c);
+      let _x = (c - startCol) * tileSize + offsetX;
+      let _y = (r - startRow) * tileSize + offsetY;
+
+      let offset = getSpriteOffset(tilePositions[tile]['row'], tilePositions[tile]['col']);
+      ctx.drawImage(
+        spriteSheet,
+        offset['dx'],
+        offset['dy'],
+        tileSize,
+        tileSize,
+        Math.round(_x),
+        Math.round(_y),
+        tileSize,
+        tileSize
+      );
+    }
+  }
 }
 
 // draw
@@ -293,31 +372,9 @@ function draw() {
   //let offset = getSpriteOffset(tilePositions[_tile]['row'], tilePositions[_tile]['col']);
 
   let chunkID = gameMap.getChunkID(player.chunkRow, player.chunkCol);
-  for (let r = startRow; r <= endRow; r++) {
-    for (let c = startCol; c <= endCol; c++) {
-      let tile = gameMap.getTile("overworld", chunkID, r, c);
-      let _x = (c - startCol) * tileSize + offsetX;
-      let _y = (r - startRow) * tileSize + offsetY;
 
-      // if (tile != 1) {
-      let offset = getSpriteOffset(tilePositions[tile]['row'], tilePositions[tile]['col']);
-      //console.log(offset);
-      ctx.drawImage(
-        spriteSheet,
-        offset['dx'],
-        offset['dy'],
-        //35 * tileSize,
-        //14 * tileSize,
-        tileSize,
-        tileSize,
-        Math.round(_x),
-        Math.round(_y),
-        tileSize,
-        tileSize
-      );
-      // }
-    }
-  }
+  drawEnvironment(startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY);
+
 
   // simulate day/night
   simTime += timeStep;
@@ -365,22 +422,22 @@ function draw() {
 
   enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
   for (let i = 0; i < enemiesInView.length; i++) {
-      let _x = (enemiesInView[i].col - startCol) * tileSize + offsetX;
-      let _y = (enemiesInView[i].row - startRow) * tileSize + offsetY;
+    let _x = (enemiesInView[i].col - startCol) * tileSize + offsetX;
+    let _y = (enemiesInView[i].row - startRow) * tileSize + offsetY;
 
-      ctx.drawImage(
-        spriteSheet,
-        30*tileSize,//offset['dx'],
-        6*tileSize,//offset['dy'],
-        //35 * tileSize,
-        //14 * tileSize,
-        tileSize,
-        tileSize,
-        Math.round(_x),
-        Math.round(_y),
-        tileSize,
-        tileSize
-      );
+    ctx.drawImage(
+      spriteSheet,
+      30 * tileSize,//offset['dx'],
+      6 * tileSize,//offset['dy'],
+      //35 * tileSize,
+      //14 * tileSize,
+      tileSize,
+      tileSize,
+      Math.round(_x),
+      Math.round(_y),
+      tileSize,
+      tileSize
+    );
 
   }
   //enemiesInView.forEach(enemy => enemy.draw());
@@ -399,6 +456,7 @@ function draw() {
     tileSize
   );
   ctx.restore();
+
 
   // draw a light around the player
   ctx.fillStyle = "rgba(247,172,59," + playerLight + ")";
