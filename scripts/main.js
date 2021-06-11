@@ -173,8 +173,6 @@ function validMove(character, dirX, dirY) {
   } else if (nextTile == TILES.TOWN) {
     let townID = gameMap.getTownID(chunkID, nextRow, nextCol);
     console.log("Welcome to " + gameMap.towns[townID]);
-
-
   }
   return true;  // no collisions found
 }
@@ -353,8 +351,15 @@ function draw() {
   console.log(gameMap.map);
   */
 
+  // draw overlay
+  ctx.fillStyle = "rgba(0,0,0," + nightSky + ")";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
 
   // update enemies in chunk, draw enemies in view (above light)
+  ctx.save();
+  // ctx.globalAlpha = nightSky; ---> alpha char based on daylight?
+
   enemiesInChunk = gameMap.enemies.filter(enemy => (enemy.getChunkID() == chunkID));
   enemiesInChunk.forEach(enemy => enemy.update());
 
@@ -393,9 +398,7 @@ function draw() {
     tileSize,
     tileSize
   );
-
-  ctx.fillStyle = "rgba(0,0,0," + nightSky + ")";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
 
   // draw a light around the player
   ctx.fillStyle = "rgba(247,172,59," + playerLight + ")";

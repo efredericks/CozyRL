@@ -215,7 +215,26 @@ class Character {
 
   // handle chunk update in the main loop
   update = function () {
+    if (Math.random() > 0.5) {//98) {
+      let directions = [
+        [-1, -1], // nw
+        [-1, 0], // n
+        [-1, 1], // ne
+        [0, 1], // e
+        [1, 1], // se
+        [1, 0], // s
+        [1, -1], // sw
+        [-1, 0], // w
+      ].sort(() => Math.random() - 0.5);
 
+      let nextTile = gameMap.getTile("overworld", this.getChunkID(), this.row+directions[0][0], this.col+directions[0][1]);
+      if (nextTile != TILES.WALL) { // nextTile.walkable) {
+        this.row += directions[0][0];
+        this.col += directions[0][1];
+      }
+      this.row = clamp(this.row, 1, gameMap.mapHeight-1);
+      this.col = clamp(this.col, 1, gameMap.mapWidth-1);
+    }
   };
 
   getChunkID = function () {
