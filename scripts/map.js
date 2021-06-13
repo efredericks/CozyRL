@@ -14,6 +14,9 @@ class mapHandler {
 
     this.npcs = this.generateNPCs();
     this.enemies = this.generateEnemies();
+    this.quests = this.setupQuests();
+
+    console.log(this.quests);
   }
 
   // colon separated town ID for lookup tables - chunkID:row:col
@@ -46,6 +49,53 @@ class mapHandler {
       console.log("Sporgle" + i + " at [" + r + ":" + c + "]");
     }
     return retval;
+  }
+
+  setupQuests = function () {
+    let quests = {};
+
+    // help a camper
+    quests["Camp Counselor"] = {
+      active: false,
+      dialogueIndex: 0,
+      questReward: 100,
+      dialogue: [],
+      targetNPC: "Camper Z", // name may not match key
+      questType: QuestTypes.FETCH,
+      questTargets: [Items.STICK, Items.MATCHES, Items.SMORES],
+    };
+
+    quests["Fish are Friends"] = {
+      active: false,
+      dialogueIndex: 0, // last is the 'done quest' dialogue
+      questRewards: {"XP": 50, "Items": [Items.BEER, Items.GOLDEN_FISH]},
+      dialogue: {
+        0: [
+          "Looking mighty fine outside, except for the storm!",
+          "Dangit, I'm all out of bait.",
+          "I'll never catch that fish now."],
+        1: [
+          "Thanks!  Now if only I had a hook to use.",
+          "Would you mind finding one for me?",
+          "I'm stuck here all day minding the store.",
+        ],
+        2: [
+          "Thanks again friend!",
+          "Only thing that would make this better is a cold beer.",
+          "Go fetch us both a couple and we'll knock off for the day.",
+        ],
+        3: [
+          "That's a beautiful fish, why don't you keep it?",
+          "Thanks for dropping by!",
+          "Good to see you again."
+        ]
+      },
+      targetNPC: "Mike the Fisherman", 
+      questType: QuestTypes.FETCH,
+      questTargets: [Items.WORM, Items.HOOK, Items.BEER],
+    };
+
+    return quests;
   }
 
   generateMap = function () {
@@ -95,23 +145,47 @@ class mapHandler {
             } else {
               let _noise = this.noiseGen.get2DNoise(col + randomOffset, row + randomOffset);
 
-              if (_noise < 0)
-                _map[levelName][_cid][row].push(TILES.GROUND);
-              else if (_noise < 0.1)
-                _map[levelName][_cid][row].push(TILES.BEACH);
-              else if (_noise < 0.3) {
-                // if (Math.random() > 0.90)
-                //   _map[levelName][_cid][row].push(TILES.WATER_ANIM);
-                // else
-                _map[levelName][_cid][row].push(TILES.WATER);
-              } else if (_noise < 0.25)
-                _map[levelName][_cid][row].push(TILES.BEACH);
-              else if (_noise < 0.4)
-                _map[levelName][_cid][row].push(getRandomInteger(TREE_SPRITE_START, TREE_SPRITE_END + 1));
-              else if (_noise < 0.5)
-                _map[levelName][_cid][row].push(TILES.FOLIAGE);
-              else
-                _map[levelName][_cid][row].push(TILES.GROUND);
+              if (chunk_col == 3 && chunk_row == 3) { // desert
+
+                if (_noise < 0.0)
+                  _map[levelName][_cid][row].push(TILES.BEACH);
+                else if (_noise < 0.1)
+                  _map[levelName][_cid][row].push(TILES.FOLIAGE);
+                else if (_noise < 0.3) {
+                  // if (Math.random() > 0.90)
+                  //   _map[levelName][_cid][row].push(TILES.WATER_ANIM);
+                  // else
+                  _map[levelName][_cid][row].push(TILES.WATER);
+                } else if (_noise < 0.25)
+                  _map[levelName][_cid][row].push(TILES.FOLIAGE);
+                else if (_noise < 0.4)
+                  _map[levelName][_cid][row].push(getRandomInteger(TREE_SPRITE_START, TREE_SPRITE_END + 1));
+                else if (_noise < 0.5)
+                  _map[levelName][_cid][row].push(TILES.FOLIAGE);
+                else
+                  _map[levelName][_cid][row].push(TILES.BEACH);
+
+              } else {
+
+
+                if (_noise < 0)
+                  _map[levelName][_cid][row].push(TILES.GROUND);
+                else if (_noise < 0.1)
+                  _map[levelName][_cid][row].push(TILES.BEACH);
+                else if (_noise < 0.3) {
+                  // if (Math.random() > 0.90)
+                  //   _map[levelName][_cid][row].push(TILES.WATER_ANIM);
+                  // else
+                  _map[levelName][_cid][row].push(TILES.WATER);
+                } else if (_noise < 0.25)
+                  _map[levelName][_cid][row].push(TILES.BEACH);
+                else if (_noise < 0.4)
+                  _map[levelName][_cid][row].push(getRandomInteger(TREE_SPRITE_START, TREE_SPRITE_END + 1));
+                else if (_noise < 0.5)
+                  _map[levelName][_cid][row].push(TILES.FOLIAGE);
+                else
+                  _map[levelName][_cid][row].push(TILES.GROUND);
+              }
             }
           }
         }
@@ -126,9 +200,12 @@ class mapHandler {
 
       let _x, _y;
       do {
+        r_chunk_row = getRandomInteger(0, this.numChunksRow);
+        r_chunk_col = getRandomInteger(0, this.numChunksCol);
+        r_chunk_id = this.getChunkID(r_chunk_row, r_chunk_col);
+
         _x = getRandomInteger(2, this.mapWidth - 3);
         _y = getRandomInteger(2, this.mapHeight - 3);
-
       } while (_map["overworld"][r_chunk_id][_x][_y] != TILES.GROUND);
       _map["overworld"][r_chunk_id][_x][_y] = TILES.TOWN;
 
@@ -227,13 +304,13 @@ class Character {
         [-1, 0], // w
       ].sort(() => Math.random() - 0.5);
 
-      let nextTile = gameMap.getTile("overworld", this.getChunkID(), this.row+directions[0][0], this.col+directions[0][1]);
+      let nextTile = gameMap.getTile("overworld", this.getChunkID(), this.row + directions[0][0], this.col + directions[0][1]);
       if (nextTile != TILES.WALL) { // nextTile.walkable) {
         this.row += directions[0][0];
         this.col += directions[0][1];
       }
-      this.row = clamp(this.row, 1, gameMap.mapHeight-1);
-      this.col = clamp(this.col, 1, gameMap.mapWidth-1);
+      this.row = clamp(this.row, 1, gameMap.mapHeight - 1);
+      this.col = clamp(this.col, 1, gameMap.mapWidth - 1);
     }
   };
 

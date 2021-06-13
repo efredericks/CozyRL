@@ -114,3 +114,20 @@ const tilePositions = {
 };
 const TREE_SPRITE_START = 4;
 const TREE_SPRITE_END = 11;
+
+const Items = {
+  STICK: 0,
+  MATCHES: 1,
+  SMORES: 2,
+  WORM: 3,
+  HOOK: 4,
+  BEER: 5,
+  FISH: 6,
+  GOLDEN_FISH: 7,
+};
+
+const QuestTypes = {
+  FETCH: 0, // fetch X things
+  KILLX: 1, // kill X things
+  STORY: 2, // talk to X npc
+}

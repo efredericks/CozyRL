@@ -314,7 +314,7 @@ function drawPause() {
     ctx.fillStyle = "rgba(13,53,6,0.5)";
     ctx.fillRect(0,(canvas.height/2)-50, canvas.width, 100);
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#666666";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = 48 + "px monospace";
