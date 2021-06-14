@@ -71,7 +71,6 @@ function handleKeys(e) {
       pauseDrawn = false;
     } else if (gameState == STATES.PAUSED)
       gameState = STATES.GAME;
-
   }
 
   /// movement keys
@@ -272,6 +271,11 @@ function stateHandler() {
       console.log("paused");
       drawPause();
       break;
+    case STATES.DIALOGUE:
+      drawBackground();
+      drawPlayer();
+      drawDialogue();
+      break;
     case STATES.GAME:
     default:
       draw();
@@ -285,6 +289,10 @@ function stateHandler() {
 // https://blog.hellojs.org/create-a-very-basic-loading-screen-using-only-javascript-css-3cf099c48b19
 function drawIntro() {
   gameState = STATES.GAME;
+}
+
+function drawDialogue() {
+
 }
 
 function drawPause() {
@@ -326,6 +334,22 @@ function drawPause() {
   pauseDrawn = true;
 }
 
+// draw player only (multiple scenes)
+function drawPlayer(startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY) {
+  // draw player
+  ctx.drawImage(
+    spriteSheet,
+    35 * tileSize,
+    14 * tileSize,
+    tileSize,
+    tileSize,
+    player.screenX - tileSize / 2,
+    player.screenY - tileSize / 2,
+    tileSize,
+    tileSize
+  );
+}
+
 // draw environment
 function drawEnvironment(startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY) {
   for (let r = startRow; r <= endRow; r++) {
@@ -349,6 +373,9 @@ function drawEnvironment(startRow, endRow, startCol, endCol, chunkID, offsetX, o
     }
   }
 }
+
+// UI on screen
+// function drawUI() { }
 
 // draw
 function draw() {
@@ -417,20 +444,25 @@ function draw() {
   ctx.save();
   // ctx.globalAlpha = nightSky; ---> alpha char based on daylight?
 
-  enemiesInChunk = gameMap.enemies.filter(enemy => (enemy.getChunkID() == chunkID));
-  enemiesInChunk.forEach(enemy => enemy.update());
+  let enemiesInChunk = gameMap.enemies.filter(enemy => (enemy.getChunkID() == chunkID));
+  let npcsInChunk = gameMap.npcs.filter(npc => (npc.getChunkID() == chunkID));
 
-  enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
-  for (let i = 0; i < enemiesInView.length; i++) {
-    let _x = (enemiesInView[i].col - startCol) * tileSize + offsetX;
-    let _y = (enemiesInView[i].row - startRow) * tileSize + offsetY;
+  enemiesInChunk.forEach(enemy => enemy.update());
+  npcsInChunk.forEach(npc => npc.update());
+
+  let npcsInView = npcsInChunk.filter(npc => (npc.row >= startRow && npc.col <= endCol));
+  let enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
+  let charactersInView = [].concat(npcsInView,enemiesInView);
+  // let enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
+  for (let i = 0; i < charactersInView.length; i++) {
+    let _x = (charactersInView[i].col - startCol) * tileSize + offsetX;
+    let _y = (charactersInView[i].row - startRow) * tileSize + offsetY;
+    let offset = getSpriteOffset(tilePositions[charactersInView[i].sprite]['row'], tilePositions[charactersInView[i].sprite]['col']);
 
     ctx.drawImage(
       spriteSheet,
-      30 * tileSize,//offset['dx'],
-      6 * tileSize,//offset['dy'],
-      //35 * tileSize,
-      //14 * tileSize,
+      offset['dx'],
+      offset['dy'],
       tileSize,
       tileSize,
       Math.round(_x),
@@ -438,23 +470,11 @@ function draw() {
       tileSize,
       tileSize
     );
-
   }
+  drawPlayer(startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY);
   //enemiesInView.forEach(enemy => enemy.draw());
   //console.log(enemiesInChunk, enemiesInView);
 
-  // draw player
-  ctx.drawImage(
-    spriteSheet,
-    35 * tileSize,
-    14 * tileSize,
-    tileSize,
-    tileSize,
-    player.screenX - tileSize / 2,
-    player.screenY - tileSize / 2,
-    tileSize,
-    tileSize
-  );
   ctx.restore();
 
 

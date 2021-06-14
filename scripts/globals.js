@@ -77,6 +77,8 @@ const TILES = {
   SHIFT_SCREEN_RIGHT: 26,
   SHIFT_SCREEN_UP: 27,
   SHIFT_SCREEN_DOWN: 28,
+  NPC: 29,
+  ENEMY: 37,
 };
 const tilePositions = {
   0: { 'row': 17, 'col': 1 }, // wall
@@ -111,9 +113,21 @@ const tilePositions = {
   27: { 'row': 20, 'col': 23 }, // shift screen up tile
   28: { 'row': 20, 'col': 25 }, // shift screen down tile
   //25: { 'row': 5, 'col': 16 }, // dock
+  29: { 'row':10, 'col': 24}, //npc1
+  30: { 'row':10, 'col': 25}, //npc2
+  31: { 'row':10, 'col': 26}, //npc3
+  32: { 'row':10, 'col': 27}, //npc4
+  33: { 'row':10, 'col': 28}, //npc5
+  34: { 'row':10, 'col': 29}, //npc6
+  35: { 'row':10, 'col': 30}, //npc7
+  36: { 'row':10, 'col': 31}, //npc8
+  37: { 'row':0, 'col': 25}, //generic enemy (TBD)
 };
 const TREE_SPRITE_START = 4;
 const TREE_SPRITE_END = 11;
+
+const NPC_SPRITE_START = 29;
+const NPC_SPRITE_END = 36;
 
 const Items = {
   STICK: 0,

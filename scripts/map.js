@@ -16,6 +16,8 @@ class mapHandler {
     this.enemies = this.generateEnemies();
     this.quests = this.setupQuests();
 
+    this.activeTarget = null;
+
     console.log(this.quests);
   }
 
@@ -35,8 +37,15 @@ class mapHandler {
   }
 
   generateNPCs = function () {
-    // for (let i = 0; i < this.numRandomNPCs; i++) {
-    // }
+    let retval = [];
+    for (let i = 0; i < this.numRandomNPCs; i++) {
+      let c = getRandomInteger(2, this.mapWidth - 3);
+      let r = getRandomInteger(2, this.mapHeight - 3);
+      let sprite = getRandomInteger(NPC_SPRITE_START,NPC_SPRITE_END+1);
+      retval.push(new Character(3, 3, r, c, "NPCzorgle" + i, "npc", sprite, 10, 10, 1, null));
+      console.log("NPCzorgle" + i + " at [" + r + ":" + c + "]");
+    }
+    return retval;
   }
 
   generateEnemies = function () {
@@ -45,7 +54,7 @@ class mapHandler {
     for (let i = 0; i < 20; i++) {
       let c = getRandomInteger(2, this.mapWidth - 3);
       let r = getRandomInteger(2, this.mapHeight - 3);
-      retval.push(new Character(3, 3, r, c, "Sporgle" + i, "enemy", "npc", 10, 10, 1, null));
+      retval.push(new Character(3, 3, r, c, "Sporgle" + i, "enemy", TILES.ENEMY, 10, 10, 1, null));
       console.log("Sporgle" + i + " at [" + r + ":" + c + "]");
     }
     return retval;
@@ -68,7 +77,7 @@ class mapHandler {
     quests["Fish are Friends"] = {
       active: false,
       dialogueIndex: 0, // last is the 'done quest' dialogue
-      questRewards: {"XP": 50, "Items": [Items.BEER, Items.GOLDEN_FISH]},
+      questRewards: { "XP": 50, "Items": [Items.BEER, Items.GOLDEN_FISH] },
       dialogue: {
         0: [
           "Looking mighty fine outside, except for the storm!",
@@ -90,7 +99,7 @@ class mapHandler {
           "Good to see you again."
         ]
       },
-      targetNPC: "Mike the Fisherman", 
+      targetNPC: "Mike the Fisherman",
       questType: QuestTypes.FETCH,
       questTargets: [Items.WORM, Items.HOOK, Items.BEER],
     };
@@ -117,6 +126,9 @@ class mapHandler {
         for (let row = 0; row < this.mapHeight; row++) {
           _map[levelName][_cid][row] = [];
           for (let col = 0; col < this.mapWidth; col++) {
+            let _obj;
+
+
             if (col == 0 || col >= this.mapWidth - 1 || row == 0 || row >= this.mapHeight - 1) {
 
               // generate chunk transitions
@@ -193,6 +205,7 @@ class mapHandler {
     }
 
     // place towns
+    let townValid = [TILES.GROUND, TILES.BEACH, TILES.FOLIAGE]; // TBD UNTIL ABSTRACTED OUT TILE
     for (let i = 0; i < numRandomTowns; i++) {
       let r_chunk_row = getRandomInteger(0, this.numChunksRow);
       let r_chunk_col = getRandomInteger(0, this.numChunksCol);
@@ -206,7 +219,8 @@ class mapHandler {
 
         _x = getRandomInteger(2, this.mapWidth - 3);
         _y = getRandomInteger(2, this.mapHeight - 3);
-      } while (_map["overworld"][r_chunk_id][_x][_y] != TILES.GROUND);
+      } while (townValid.indexOf(_map["overworld"][r_chunk_id][_x][_y]) <= 0);
+      // } while (_map["overworld"][r_chunk_id][_x][_y] != TILES.GROUND);
       _map["overworld"][r_chunk_id][_x][_y] = TILES.TOWN;
 
       let allCities = english_towns_cities.cities.concat(english_towns_cities.towns);
