@@ -24,6 +24,18 @@ function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
+function shuffle(arr) {
+  let tmp, r;
+  for (let i = 1; i < arr.length; i++) {
+    r = getRandomInteger(0, i + 1);
+    tmp = arr[i];
+    arr[i] = arr[r];
+    arr[r] = tmp;
+  }
+  return arr;
+}
+
+
 // https://stackoverflow.com/questions/48802987/is-there-a-map-function-in-vanilla-javascript-like-p5-js
 // linearly maps value from the range (a..b) to (c..d)
 function mapRange(value, a, b, c, d) {
@@ -79,6 +91,7 @@ const TILES = {
   SHIFT_SCREEN_DOWN: 28,
   NPC: 29,
   ENEMY: 37,
+  SNOW: 38,
 };
 const tilePositions = {
   0: { 'row': 17, 'col': 1 }, // wall
@@ -113,15 +126,16 @@ const tilePositions = {
   27: { 'row': 20, 'col': 23 }, // shift screen up tile
   28: { 'row': 20, 'col': 25 }, // shift screen down tile
   //25: { 'row': 5, 'col': 16 }, // dock
-  29: { 'row':10, 'col': 24}, //npc1
-  30: { 'row':10, 'col': 25}, //npc2
-  31: { 'row':10, 'col': 26}, //npc3
-  32: { 'row':10, 'col': 27}, //npc4
-  33: { 'row':10, 'col': 28}, //npc5
-  34: { 'row':10, 'col': 29}, //npc6
-  35: { 'row':10, 'col': 30}, //npc7
-  36: { 'row':10, 'col': 31}, //npc8
-  37: { 'row':0, 'col': 25}, //generic enemy (TBD)
+  29: { 'row': 10, 'col': 24 }, //npc1
+  30: { 'row': 10, 'col': 25 }, //npc2
+  31: { 'row': 10, 'col': 26 }, //npc3
+  32: { 'row': 10, 'col': 27 }, //npc4
+  33: { 'row': 10, 'col': 28 }, //npc5
+  34: { 'row': 10, 'col': 29 }, //npc6
+  35: { 'row': 10, 'col': 30 }, //npc7
+  36: { 'row': 10, 'col': 31 }, //npc8
+  37: { 'row': 0, 'col': 25 }, //generic enemy (TBD)
+  38: { 'row': 22, 'col': 0 }, //snow
 };
 const TREE_SPRITE_START = 4;
 const TREE_SPRITE_END = 11;
@@ -145,3 +159,19 @@ const QuestTypes = {
   KILLX: 1, // kill X things
   STORY: 2, // talk to X npc
 }
+
+const NPCBlathering = {
+  "generic": [
+    "Hey, how's it going?",
+    "Nice weather we're having here.",
+    "Generic platitudes of greeting.",
+    "Out of my way runt.",
+    "Buzz off!",
+    "Not in the mood today!",
+    "Have you heard about Pluto?",
+    "Watch it!",
+    "Nice...face.",
+    "Hey there adventurer!",
+  ],
+  "specific": {},
+};

@@ -20,6 +20,7 @@ let simTime = 0;
 let timeStep = .1;
 let gameState = STATES.INTRO;
 let pauseDrawn = false;
+let dialogueDrawn = false;
 
 // map globals (in cells)
 let mapWidth = 340;//500;//1000;
@@ -79,6 +80,7 @@ function handleKeys(e) {
     if (keyConfig[e.keyCode] == "interact") { // move the dialogue along
       gameState = STATES.GAME;
       gameMap.activeTarget = null;
+      dialogueDrawn = false;
     }
   } else if (gameState == STATES.GAME) {
 
@@ -215,6 +217,9 @@ function validMove(character, dirX, dirY) {
     // let charactersInView = [].concat(npcsInView, enemiesInView);
     // let enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
 
+    // why don't all work? --> add an overlay for just row/col checking
+
+
     // NPC collision check
     for (let i = 0; i < npcsInView.length; i++) {
       if (npcsInView[i].row == nextRow && npcsInView[i].col == nextCol) {
@@ -314,21 +319,6 @@ function stateHandler() {
       drawPause();
       break;
     case STATES.DIALOGUE:
-      /// TBD: AGAIN, ABSTRACT THESE VARS
-      var startCol = Math.floor(camera.x / tileSize);
-      var endCol = startCol + Math.floor(camera.width / tileSize);
-      var startRow = Math.floor(camera.y / tileSize);
-      var endRow = startRow + Math.floor(camera.height / tileSize);
-      var offsetX = -camera.x + startCol * tileSize;
-      var offsetY = -camera.y + startRow * tileSize;
-      if (endCol >= gameMap.mapWidth)
-        endCol = gameMap.mapWidth - 1;
-      if (endRow >= gameMap.mapHeight)
-        endRow = gameMap.mapHeight - 1;
-      let chunkID = gameMap.getChunkID(player.chunkRow, player.chunkCol);
-      drawEnvironment(startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY);
-      ////
-      drawPlayer();
       drawDialogue();
       break;
     case STATES.GAME:
@@ -347,7 +337,34 @@ function drawIntro() {
 }
 
 function drawDialogue() {
+  ctx.save();
+  if (!dialogueDrawn) {
+    /// TBD: AGAIN, ABSTRACT THESE VARS
+    var startCol = Math.floor(camera.x / tileSize);
+    var endCol = startCol + Math.floor(camera.width / tileSize);
+    var startRow = Math.floor(camera.y / tileSize);
+    var endRow = startRow + Math.floor(camera.height / tileSize);
+    var offsetX = -camera.x + startCol * tileSize;
+    var offsetY = -camera.y + startRow * tileSize;
+    if (endCol >= gameMap.mapWidth)
+      endCol = gameMap.mapWidth - 1;
+    if (endRow >= gameMap.mapHeight)
+      endRow = gameMap.mapHeight - 1;
+    let chunkID = gameMap.getChunkID(player.chunkRow, player.chunkCol);
 
+    drawEnvironment(startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY);
+
+    // draw dialogue now
+    // overlay
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    drawPlayer();
+    drawTarget(gameMap.activeTarget, startRow, startCol, offsetX, offsetY);
+
+  }
+  dialogueDrawn = true;
+  ctx.restore();
 }
 
 function drawPause() {
@@ -389,8 +406,45 @@ function drawPause() {
   pauseDrawn = true;
 }
 
+// draw target only
+function drawTarget(target, startRow, startCol, offsetX, offsetY) {
+  console.log(target)
+  let _x = (target.col - startCol) * tileSize + offsetX;
+  let _y = (target.row - startRow) * tileSize + offsetY;
+  let offset = getSpriteOffset(tilePositions[target.sprite]['row'], tilePositions[target.sprite]['col']);
+
+  // text overlay
+  ctx.fillStyle = "rgba(13,53,6,0.5)";
+  ctx.fillRect(0, _y - 150, canvas.width, 100);
+
+  ctx.fillStyle = "#CCCCCC";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = 48 + "px monospace";
+  ctx.fillText(target.dialogue[target.dialogueIndex], canvas.width / 2, _y - 100);
+  target.dialogueIndex++;
+  if (target.dialogueIndex >= target.dialogue.length)
+    target.dialogueIndex = 0;
+
+
+
+
+  ctx.drawImage(
+    spriteSheet,
+    offset['dx'],
+    offset['dy'],
+    tileSize,
+    tileSize,
+    Math.round(_x),
+    Math.round(_y),
+    tileSize,
+    tileSize
+  );
+}
+
+
 // draw player only (multiple scenes)
-function drawPlayer(startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY) {
+function drawPlayer() {
   // draw player
   ctx.drawImage(
     spriteSheet,
@@ -502,8 +556,8 @@ function draw() {
   let enemiesInChunk = gameMap.enemies.filter(enemy => (enemy.getChunkID() == chunkID));
   let npcsInChunk = gameMap.npcs.filter(npc => (npc.getChunkID() == chunkID));
 
-  enemiesInChunk.forEach(enemy => enemy.update());
-  npcsInChunk.forEach(npc => npc.update());
+  // enemiesInChunk.forEach(enemy => enemy.update());
+  // npcsInChunk.forEach(npc => npc.update());
 
   let npcsInView = npcsInChunk.filter(npc => (npc.row >= startRow && npc.col <= endCol));
   let enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
@@ -533,7 +587,7 @@ function draw() {
       tileSize
     );
   }
-  drawPlayer(startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY);
+  drawPlayer();//startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY);
   //enemiesInView.forEach(enemy => enemy.draw());
   //console.log(enemiesInChunk, enemiesInView);
 
@@ -584,6 +638,7 @@ window.onload = function () {
   camera.update();
 
   spriteSheet = new Image();
-  spriteSheet.src = "./assets/colored_transparent_packed.png";
+  // spriteSheet.src = "./assets/colored_transparent_packed.png";
+  spriteSheet.src = "./assets/colored_transparent_packed_modified.png";
   spriteSheet.onload = stateHandler;//draw;
 }

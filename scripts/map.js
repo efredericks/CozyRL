@@ -18,7 +18,6 @@ class mapHandler {
 
     this.activeTarget = null;
 
-    console.log(this.quests);
   }
 
   // colon separated town ID for lookup tables - chunkID:row:col
@@ -41,8 +40,16 @@ class mapHandler {
     for (let i = 0; i < this.numRandomNPCs; i++) {
       let c = getRandomInteger(2, this.mapWidth - 3);
       let r = getRandomInteger(2, this.mapHeight - 3);
-      let sprite = getRandomInteger(NPC_SPRITE_START,NPC_SPRITE_END+1);
-      retval.push(new Character(3, 3, r, c, "NPCzorgle" + i, "npc", sprite, 10, 10, 1, null));
+      let sprite = getRandomInteger(NPC_SPRITE_START, NPC_SPRITE_END + 1);
+      let newchar = new Character(3, 3, r, c, "NPCzorgle" + i, "npc", sprite, 10, 10, 1, null);
+
+      // TBD
+      let sampleDialogue = shuffle(NPCBlathering.generic);
+      for (let j = 0; j < 4; j++) {
+        newchar.dialogue.push(sampleDialogue[j]);
+      }
+
+      retval.push(newchar);
       console.log("NPCzorgle" + i + " at [" + r + ":" + c + "]");
     }
     return retval;
@@ -160,7 +167,7 @@ class mapHandler {
               if (chunk_col == 3 && chunk_row == 3) { // desert
 
                 if (_noise < 0.0)
-                  _map[levelName][_cid][row].push(TILES.BEACH);
+                  _map[levelName][_cid][row].push(TILES.SNOW);
                 else if (_noise < 0.1)
                   _map[levelName][_cid][row].push(TILES.FOLIAGE);
                 else if (_noise < 0.3) {
@@ -175,7 +182,7 @@ class mapHandler {
                 else if (_noise < 0.5)
                   _map[levelName][_cid][row].push(TILES.FOLIAGE);
                 else
-                  _map[levelName][_cid][row].push(TILES.BEACH);
+                  _map[levelName][_cid][row].push(TILES.SNOW);
 
               } else {
 
@@ -205,7 +212,7 @@ class mapHandler {
     }
 
     // place towns
-    let townValid = [TILES.GROUND, TILES.BEACH, TILES.FOLIAGE]; // TBD UNTIL ABSTRACTED OUT TILE
+    let townValid = [TILES.SNOW, TILES.GROUND, TILES.BEACH, TILES.FOLIAGE]; // TBD UNTIL ABSTRACTED OUT TILE
     for (let i = 0; i < numRandomTowns; i++) {
       let r_chunk_row = getRandomInteger(0, this.numChunksRow);
       let r_chunk_col = getRandomInteger(0, this.numChunksCol);
@@ -298,6 +305,8 @@ class Character {
     this.ac = ac;
     this.level = level;
     this.inventory = inventory;
+    this.dialogue = [];
+    this.dialogueIndex = 0;
   };
 
   draw = function () {
@@ -316,7 +325,10 @@ class Character {
         [1, 0], // s
         [1, -1], // sw
         [-1, 0], // w
-      ].sort(() => Math.random() - 0.5);
+      ];//.sort(() => Math.random() - 0.5);
+      directions = shuffle(directions);
+
+
 
       let nextTile = gameMap.getTile("overworld", this.getChunkID(), this.row + directions[0][0], this.col + directions[0][1]);
       if (nextTile != TILES.WALL) { // nextTile.walkable) {
