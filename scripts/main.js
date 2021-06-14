@@ -243,6 +243,13 @@ let Player = function () {
   this.chunkRow = 3;
   this.chunkCol = 3;
 
+  this.hp = 10;
+  this.maxHP = 10;
+  this.level = 1;
+  this.ac = 10;
+  this.cash = 100;
+
+
   this.row = Math.floor(gameMap.mapHeight / 2);
   this.col = Math.floor(gameMap.mapWidth / 2);
 
@@ -317,13 +324,16 @@ function stateHandler() {
     case STATES.PAUSED:
       console.log("paused");
       drawPause();
+      drawUI();
       break;
     case STATES.DIALOGUE:
       drawDialogue();
+      drawUI();
       break;
     case STATES.GAME:
     default:
       draw();
+      drawUI();
 
       break;
   }
@@ -484,7 +494,18 @@ function drawEnvironment(startRow, endRow, startCol, endCol, chunkID, offsetX, o
 }
 
 // UI on screen
-// function drawUI() { }
+function drawUI() { 
+  ctx.save();
+  ctx.fillStyle = "rgba(13,53,6,0.6)";
+  ctx.fillRect(canvas.width-400, 0, 400, 20);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = 18 + "px monospace";
+
+  let txt = `XP: ${player.level} | HP: ${player.hp}/${player.maxHP} | AC: ${player.ac} | GP: ${player.cash}`;
+  ctx.fillText(txt, canvas.width-390, 15);
+  ctx.restore();
+}
 
 // draw
 function draw() {
