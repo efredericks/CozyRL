@@ -176,6 +176,10 @@ const NPCBlathering = {
     "Watch it!",
     "Nice...face.",
     "Hey there adventurer!",
+    "I'm walkin' here!",
+    "There are other worlds than these.",
+    "Go forth hyperborean wanderer!",
+    "Have you seen my keys?",
   ],
   "specific": {},
 };
