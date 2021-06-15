@@ -140,11 +140,40 @@ function handleKeys(e) {
 }
 
 function validMove(character, dirX, dirY) {
-  let pos = getRowCol(character.x, character.y);
+  //let pos = getRowCol(character.x, character.y);
   let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
 
-  let nextRow = pos['row'] + dirY;
-  let nextCol = pos['col'] + dirX;
+  let nextRow = character.row + dirY;//pos['row'] + dirY;
+  let nextCol = character.col + dirX;//pos['col'] + dirX;
+
+  console.log(nextRow, nextCol);
+
+  // NPC collision check
+  let nextID = `${chunkID}:${nextRow}:${nextCol}`;
+  console.log(nextID);
+
+  if (nextID in gameMap.mapOverlay) {//} && gameMap.mapOverlay[nextID]) {
+    console.log(gameMap.mapOverlay[nextID]);
+    if (gameMap.mapOverlay[nextID].type == "npc") {
+      gameMap.activeTarget = gameMap.mapOverlay[nextID];
+      console.log(gameMap.activeTarget);
+      gameState = STATES.DIALOGUE;
+      return false;
+    } else {
+      // either an enemy or something else..
+      return false;
+    }
+  }
+  // for (let i = 0; i < npcsInView.length; i++) {
+  //   if (npcsInView[i].row == nextRow && npcsInView[i].col == nextCol) {
+  //     gameMap.activeTarget = npcsInView[i];
+  //     console.log(gameMap.activeTarget);
+  //     gameState = STATES.DIALOGUE;
+  //     return false;
+  //   }
+  // }
+
+  // enemy collision check
 
   // waaay out of bounds
   if (nextRow < 0 || nextCol < 0 || nextRow > (gameMap.mapHeight - 1) || nextCol > (gameMap.mapWidth - 1))
@@ -195,42 +224,30 @@ function validMove(character, dirX, dirY) {
   } else if (nextTile == TILES.TOWN) {
     let townID = gameMap.getTownID(chunkID, nextRow, nextCol);
     console.log("Welcome to " + gameMap.towns[townID]);
-  } else {
-    //TBD - ABSTRACT THIS!!!!
-    var startCol = Math.floor(camera.x / tileSize);
-    var endCol = startCol + Math.floor(camera.width / tileSize);
-    var startRow = Math.floor(camera.y / tileSize);
-    var endRow = startRow + Math.floor(camera.height / tileSize);
-    var offsetX = -camera.x + startCol * tileSize;
-    var offsetY = -camera.y + startRow * tileSize;
-    if (endCol >= gameMap.mapWidth)
-      endCol = gameMap.mapWidth - 1;
-    if (endRow >= gameMap.mapHeight)
-      endRow = gameMap.mapHeight - 1;
+    // } else {
+    //   //TBD - ABSTRACT THIS!!!!
+    //   var startCol = Math.floor(camera.x / tileSize);
+    //   var endCol = startCol + Math.floor(camera.width / tileSize);
+    //   var startRow = Math.floor(camera.y / tileSize);
+    //   var endRow = startRow + Math.floor(camera.height / tileSize);
+    //   var offsetX = -camera.x + startCol * tileSize;
+    //   var offsetY = -camera.y + startRow * tileSize;
+    //   if (endCol >= gameMap.mapWidth)
+    //     endCol = gameMap.mapWidth - 1;
+    //   if (endRow >= gameMap.mapHeight)
+    //     endRow = gameMap.mapHeight - 1;
 
-    let chunkID = gameMap.getChunkID(player.chunkRow, player.chunkCol);
-    let enemiesInChunk = gameMap.enemies.filter(enemy => (enemy.getChunkID() == chunkID));
-    let npcsInChunk = gameMap.npcs.filter(npc => (npc.getChunkID() == chunkID));
-    let npcsInView = npcsInChunk.filter(npc => (npc.row >= startRow && npc.col <= endCol));
-    let enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
-    ///
-    // let charactersInView = [].concat(npcsInView, enemiesInView);
-    // let enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
+    //   let chunkID = gameMap.getChunkID(player.chunkRow, player.chunkCol);
+    //   let enemiesInChunk = gameMap.enemies.filter(enemy => (enemy.getChunkID() == chunkID));
+    //   let npcsInChunk = gameMap.npcs.filter(npc => (npc.getChunkID() == chunkID));
+    //   let npcsInView = npcsInChunk.filter(npc => (npc.row >= startRow && npc.col <= endCol));
+    //   let enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
+    //   ///
+    //   // let charactersInView = [].concat(npcsInView, enemiesInView);
+    //   // let enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));
 
-    // why don't all work? --> add an overlay for just row/col checking
+    //   // why don't all work? --> add an overlay for just row/col checking
 
-
-    // NPC collision check
-    for (let i = 0; i < npcsInView.length; i++) {
-      if (npcsInView[i].row == nextRow && npcsInView[i].col == nextCol) {
-        gameMap.activeTarget = npcsInView[i];
-        console.log(gameMap.activeTarget);
-        gameState = STATES.DIALOGUE;
-        return false;
-      }
-    }
-
-    // enemy collision check
   }
   return true;  // no collisions found
 }
@@ -494,16 +511,16 @@ function drawEnvironment(startRow, endRow, startCol, endCol, chunkID, offsetX, o
 }
 
 // UI on screen
-function drawUI() { 
+function drawUI() {
   ctx.save();
   ctx.fillStyle = "rgba(13,53,6,0.6)";
-  ctx.fillRect(canvas.width-400, 0, 400, 20);
+  ctx.fillRect(canvas.width - 400, 0, 400, 20);
 
   ctx.fillStyle = "#ffffff";
   ctx.font = 18 + "px monospace";
 
   let txt = `XP: ${player.level} | HP: ${player.hp}/${player.maxHP} | AC: ${player.ac} | GP: ${player.cash}`;
-  ctx.fillText(txt, canvas.width-390, 15);
+  ctx.fillText(txt, canvas.width - 390, 15);
   ctx.restore();
 }
 
@@ -577,8 +594,8 @@ function draw() {
   let enemiesInChunk = gameMap.enemies.filter(enemy => (enemy.getChunkID() == chunkID));
   let npcsInChunk = gameMap.npcs.filter(npc => (npc.getChunkID() == chunkID));
 
-  // enemiesInChunk.forEach(enemy => enemy.update());
-  // npcsInChunk.forEach(npc => npc.update());
+  enemiesInChunk.forEach(enemy => enemy.update());
+  npcsInChunk.forEach(npc => npc.update());
 
   let npcsInView = npcsInChunk.filter(npc => (npc.row >= startRow && npc.col <= endCol));
   let enemiesInView = enemiesInChunk.filter(enemy => (enemy.row >= startRow && enemy.col <= endCol));

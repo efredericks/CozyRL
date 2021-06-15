@@ -12,12 +12,17 @@ class mapHandler {
     this.map = retval.map
     this.towns = retval.towns; // city name by chunkID:row:col lookup
 
-    this.npcs = this.generateNPCs();
-    this.enemies = this.generateEnemies();
+    // create an overlay - key: chunkRow:chunkCol:row:col
+    // delete the key and recreate it to avoid having a massive double dictionary
+    // could be bad performance wise but we'll see...
+    this.mapOverlay = {};
+    this.npcs = this.generateNPCs(this.mapOverlay);
+    this.enemies = this.generateEnemies(this.mapOverlay);
     this.quests = this.setupQuests();
 
-    this.activeTarget = null;
+    console.log(this.mapOverlay);
 
+    this.activeTarget = null;
   }
 
   // colon separated town ID for lookup tables - chunkID:row:col
@@ -35,13 +40,25 @@ class mapHandler {
     return { 'row': c[0], 'col': c[1] }
   }
 
-  generateNPCs = function () {
+  generateNPCs = function (overlay) {
     let retval = [];
     for (let i = 0; i < this.numRandomNPCs; i++) {
-      let c = getRandomInteger(2, this.mapWidth - 3);
-      let r = getRandomInteger(2, this.mapHeight - 3);
+      let _chunkRow, _chunkCol;
+      let r, c;
+      let key;
+      do {
+        _chunkRow = 3;//getRandomInteger(0, this.numChunksRow);
+        _chunkCol = 3;//getRandomInteger(0, this.numChunksCol);
+
+        c = getRandomInteger(2, this.mapWidth - 3);
+        r = getRandomInteger(2, this.mapHeight - 3);
+
+        key = getOverlayKey(_chunkRow, _chunkCol, r, c);
+      } while (key in overlay);
       let sprite = getRandomInteger(NPC_SPRITE_START, NPC_SPRITE_END + 1);
-      let newchar = new Character(3, 3, r, c, "NPCzorgle" + i, "npc", sprite, 10, 10, 1, null);
+      let newchar = new Character(_chunkRow, _chunkCol, r, c, "NPCzorgle" + i, "npc", sprite, 10, 10, 1, null);
+
+      overlay[key] = newchar; // add to overlay
 
       // TBD
       let sampleDialogue = shuffle(NPCBlathering.generic);
@@ -50,19 +67,32 @@ class mapHandler {
       }
 
       retval.push(newchar);
-      console.log("NPCzorgle" + i + " at [" + r + ":" + c + "]");
+      // console.log("NPCzorgle" + i + " at [" + r + ":" + c + "]");
     }
     return retval;
   }
 
-  generateEnemies = function () {
+  generateEnemies = function (overlay) {
     let retval = [];
 
     for (let i = 0; i < 20; i++) {
-      let c = getRandomInteger(2, this.mapWidth - 3);
-      let r = getRandomInteger(2, this.mapHeight - 3);
-      retval.push(new Character(3, 3, r, c, "Sporgle" + i, "enemy", TILES.ENEMY, 10, 10, 1, null));
-      console.log("Sporgle" + i + " at [" + r + ":" + c + "]");
+      let _chunkRow, _chunkCol;
+      let r, c;
+      let key;
+      do {
+        _chunkRow = 3;//getRandomInteger(0, this.numChunksRow);
+        _chunkCol = 3;//getRandomInteger(0, this.numChunksCol);
+
+        c = getRandomInteger(2, this.mapWidth - 3);
+        r = getRandomInteger(2, this.mapHeight - 3);
+
+        key = getOverlayKey(_chunkRow, _chunkCol, r, c);
+      } while (key in overlay);
+
+      let newchar = new Character(_chunkRow, _chunkCol, r, c, "Sporgle" + i, "enemy", TILES.ENEMY, 10, 10, 1, null);
+      overlay[key] = newchar; // add to overlay
+      retval.push(newchar);
+      // console.log("Sporgle" + i + " at [" + r + ":" + c + "]");
     }
     return retval;
   }
@@ -329,11 +359,22 @@ class Character {
       directions = shuffle(directions);
 
 
+      // check map and overlay
+      let nextRow = this.row + directions[0][0];
+      let nextCol = this.col + directions[0][1];
+      let oldkey = `${this.getChunkID()}:${this.row}:${this.col}`;
+      let newkey = `${this.getChunkID()}:${nextRow}:${nextCol}`;
 
-      let nextTile = gameMap.getTile("overworld", this.getChunkID(), this.row + directions[0][0], this.col + directions[0][1]);
-      if (nextTile != TILES.WALL) { // nextTile.walkable) {
+      let nextTile = gameMap.getTile("overworld", this.getChunkID(), nextRow, nextCol);
+      // let nextTileID = getOverlayKey()
+
+      if ((nextTile != TILES.WALL) && !(newkey in gameMap.mapOverlay)) { // nextTile.walkable) {
         this.row += directions[0][0];
         this.col += directions[0][1];
+
+        // update overlay
+        gameMap.mapOverlay[newkey] = gameMap.mapOverlay[oldkey];
+        delete gameMap.mapOverlay[oldkey];
       }
       this.row = clamp(this.row, 1, gameMap.mapHeight - 1);
       this.col = clamp(this.col, 1, gameMap.mapWidth - 1);

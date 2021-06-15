@@ -1,3 +1,7 @@
+function getOverlayKey(_chunkRow, _chunkCol, r, c) {
+  return `${_chunkRow}:${_chunkCol}:${r}:${c}`;
+}
+
 function getSpriteOffset(row, col) {
   let dx = col * tileSize;
   let dy = row * tileSize;
