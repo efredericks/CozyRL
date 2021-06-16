@@ -146,7 +146,7 @@ function combat(enemy) {
   if (enemy.hp <= 0) {
     enemy.hp = 0;
     player.level += 0.2;
-    player.level = Math.round(player.level * 10)/10; // round to 1 decimal
+    player.level = Math.round(player.level * 10) / 10; // round to 1 decimal
     return false;
   }
   return true;
@@ -154,7 +154,7 @@ function combat(enemy) {
 
 function removeEnemy(enemy, id) {
   delete gameMap.mapOverlay[id];
-  for (let i = gameMap.enemies.length-1; i >= 0; i--) {
+  for (let i = gameMap.enemies.length - 1; i >= 0; i--) {
     // if (gameMap.enemies[i].hp <= 0);
     if (gameMap.enemies[i] === enemy) {
       gameMap.enemies.splice(i, 1);
@@ -510,6 +510,9 @@ function drawPlayer() {
     tileSize,
     tileSize
   );
+
+  let percHealth = player.hp / player.maxHP;
+  drawHealthBar(Math.round(player.screenX - (tileSize / 2) - 1), Math.round(player.screenY - tileSize / 2), 100, 24, percHealth);
 }
 
 // draw environment
@@ -548,6 +551,26 @@ function drawUI() {
   let txt = `XP: ${player.level} | HP: ${player.hp}/${player.maxHP} | AC: ${player.ac} | GP: ${player.cash}`;
   ctx.fillText(txt, canvas.width - 390, 15);
   ctx.restore();
+}
+
+function drawHealthBar(x, y, w, h, perc) {
+  // let _x = x * tileSize;// + shakeX;
+  // let _y = y * tileSize + tileSize - 4;// + shakeY + tileSize - 4;
+  let _x = x;
+  let _y = y - 6;
+  let _w = (tileSize - 4) * perc;
+
+  // outer bar
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(0,0,0,0.8)";
+  ctx.fillRect(_x, _y, tileSize, 6);
+  ctx.closePath();
+
+  // inner bar
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(0,255,0,0.8)";
+  ctx.fillRect(_x + 2, _y + 2, _w, 2);
+  ctx.closePath();
 }
 
 // draw
@@ -633,12 +656,14 @@ function draw() {
     let offset = getSpriteOffset(tilePositions[charactersInView[i].sprite]['row'], tilePositions[charactersInView[i].sprite]['col']);
     let tw = tileSize / 2;
 
+    // aura
     ctx.fillStyle = "rgba(247,172,59," + playerLight / 2 + ")";
     ctx.beginPath();
     ctx.arc(_x + tw, _y + tw, 25, 0, 2 * Math.PI);
     ctx.fill();
     ctx.closePath();
 
+    // enemy
     ctx.drawImage(
       spriteSheet,
       offset['dx'],
@@ -650,6 +675,12 @@ function draw() {
       tileSize,
       tileSize
     );
+    // enemy health bar
+    if (charactersInView[i].type == "enemy") {
+      let percHealth = charactersInView[i].hp / charactersInView[i].maxHP;
+      drawHealthBar(Math.round(_x), Math.round(_y), 100, 24, percHealth);
+    }
+
   }
   drawPlayer();//startRow, endRow, startCol, endCol, chunkID, offsetX, offsetY);
   //enemiesInView.forEach(enemy => enemy.draw());

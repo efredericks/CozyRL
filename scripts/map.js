@@ -332,6 +332,7 @@ class Character {
     this.type = type;
     this.sprite = sprite;
     this.hp = hp;
+    this.maxHP = hp;
     this.ac = ac;
     this.level = level;
     this.inventory = inventory;
