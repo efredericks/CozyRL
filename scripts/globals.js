@@ -180,6 +180,7 @@ const NPCBlathering = {
     "There are other worlds than these.",
     "Go forth hyperborean wanderer!",
     "Have you seen my keys?",
+    "Has the King returned yet?",
   ],
   "specific": {},
 };

@@ -139,6 +139,30 @@ function handleKeys(e) {
   }
 }
 
+// return false if you killed the enemy
+function combat(enemy) {
+  enemy.hp -= Math.floor(player.level);
+  console.log(enemy.name, enemy.hp);
+  if (enemy.hp <= 0) {
+    enemy.hp = 0;
+    player.level += 0.2;
+    player.level = Math.round(player.level * 10)/10; // round to 1 decimal
+    return false;
+  }
+  return true;
+}
+
+function removeEnemy(enemy, id) {
+  delete gameMap.mapOverlay[id];
+  for (let i = gameMap.enemies.length-1; i >= 0; i--) {
+    // if (gameMap.enemies[i].hp <= 0);
+    if (gameMap.enemies[i] === enemy) {
+      gameMap.enemies.splice(i, 1);
+      break;
+    }
+  }
+}
+
 function validMove(character, dirX, dirY) {
   //let pos = getRowCol(character.x, character.y);
   let chunkID = gameMap.getChunkID(character.chunkRow, character.chunkCol);
@@ -146,18 +170,20 @@ function validMove(character, dirX, dirY) {
   let nextRow = character.row + dirY;//pos['row'] + dirY;
   let nextCol = character.col + dirX;//pos['col'] + dirX;
 
-  console.log(nextRow, nextCol);
-
-  // NPC collision check
+  // NPC/Enemy collision check
   let nextID = `${chunkID}:${nextRow}:${nextCol}`;
-  console.log(nextID);
 
   if (nextID in gameMap.mapOverlay) {//} && gameMap.mapOverlay[nextID]) {
-    console.log(gameMap.mapOverlay[nextID]);
-    if (gameMap.mapOverlay[nextID].type == "npc") {
-      gameMap.activeTarget = gameMap.mapOverlay[nextID];
-      console.log(gameMap.activeTarget);
+    let char = gameMap.mapOverlay[nextID];
+    if (char.type == "npc") {
+      gameMap.activeTarget = char;//gameMap.mapOverlay[nextID];
+      // console.log(gameMap.activeTarget);
       gameState = STATES.DIALOGUE;
+      return false;
+    } else if (char.type == "enemy") {
+      let charState = combat(char);
+      if (!charState)
+        removeEnemy(char, nextID);
       return false;
     } else {
       // either an enemy or something else..
@@ -189,12 +215,12 @@ function validMove(character, dirX, dirY) {
     let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].leftChunkID);
     character.chunkCol = nextChunk.col;
     character.chunkRow = nextChunk.row;
-    console.log(nextChunk);
+    // console.log(nextChunk);
     // if (character.chunkCol < 0) character.chunkCol = 0;
     character.col = gameMap.mapWidth - 1;
   } else if (nextTile == TILES.SHIFT_SCREEN_RIGHT) {
     let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].rightChunkID);
-    console.log(nextChunk);
+    // console.log(nextChunk);
     character.chunkCol = nextChunk.col;
     character.chunkRow = nextChunk.row;
     // character.chunkCol++;
@@ -202,7 +228,7 @@ function validMove(character, dirX, dirY) {
     character.col = 0;
   } else if (nextTile == TILES.SHIFT_SCREEN_UP) {
     let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].upChunkID);
-    console.log(nextChunk);
+    // console.log(nextChunk);
     character.chunkCol = nextChunk.col;
     character.chunkRow = nextChunk.row;
     // character.chunkCol++;
@@ -210,7 +236,7 @@ function validMove(character, dirX, dirY) {
     character.row = gameMap.mapHeight - 1;
   } else if (nextTile == TILES.SHIFT_SCREEN_DOWN) {
     let nextChunk = gameMap.getChunkSeparate(gameMap.map["overworld"][chunkID].downChunkID);
-    console.log(nextChunk);
+    // console.log(nextChunk);
     character.chunkCol = nextChunk.col;
     character.chunkRow = nextChunk.row;
     // character.chunkCol++;
@@ -339,7 +365,7 @@ function stateHandler() {
       drawIntro();
       break;
     case STATES.PAUSED:
-      console.log("paused");
+      // console.log("paused");
       drawPause();
       drawUI();
       break;
@@ -435,7 +461,7 @@ function drawPause() {
 
 // draw target only
 function drawTarget(target, startRow, startCol, offsetX, offsetY) {
-  console.log(target)
+  // console.log(target)
   let _x = (target.col - startCol) * tileSize + offsetX;
   let _y = (target.row - startRow) * tileSize + offsetY;
   let offset = getSpriteOffset(tilePositions[target.sprite]['row'], tilePositions[target.sprite]['col']);

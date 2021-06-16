@@ -20,7 +20,7 @@ class mapHandler {
     this.enemies = this.generateEnemies(this.mapOverlay);
     this.quests = this.setupQuests();
 
-    console.log(this.mapOverlay);
+    // console.log(this.mapOverlay);
 
     this.activeTarget = null;
   }
@@ -75,7 +75,7 @@ class mapHandler {
   generateEnemies = function (overlay) {
     let retval = [];
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 120; i++) {
       let _chunkRow, _chunkCol;
       let r, c;
       let key;
@@ -192,7 +192,7 @@ class mapHandler {
               } else
                 _map[levelName][_cid][row].push(TILES.WALL);
             } else {
-              let _noise = this.noiseGen.get2DNoise(col + randomOffset, row + randomOffset);
+              let _noise = this.noiseGen.get4DNoise(col + randomOffset, row + randomOffset, chunk_row, chunk_col);
 
               if (chunk_col == 3 && chunk_row == 3) { // desert
 
@@ -339,9 +339,9 @@ class Character {
     this.dialogueIndex = 0;
   };
 
-  draw = function () {
-    console.log(this.name + " says hey");
-  };
+  // draw = function () {
+  //   console.log(this.name + " says hey");
+  // };
 
   // handle chunk update in the main loop
   update = function () {
