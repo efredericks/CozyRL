@@ -512,7 +512,7 @@ function drawPlayer() {
   );
 
   let percHealth = player.hp / player.maxHP;
-  drawHealthBar(Math.round(player.screenX - (tileSize / 2) - 1), Math.round(player.screenY - tileSize / 2), 100, 24, percHealth);
+  drawHealthBar(Math.round(player.screenX - (tileSize / 2)), Math.round(player.screenY - tileSize / 2), 100, 24, percHealth);
 }
 
 // draw environment
